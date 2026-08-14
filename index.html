@@ -813,7 +813,7 @@
         diceValue: 1
       };
 
-      db.ref('rooms/' + currentRoomCode).set(gameState).then(() => {
+      db.ref('phy_rooms/' + currentRoomCode).set(gameState).then(() => {
         listenToRoom();
         setupLobbyUI();
       });
@@ -833,7 +833,7 @@
       const code = document.getElementById('join-room-code-input').value.trim().toUpperCase();
       if(!code) return alert('กรุณาป้อนรหัสห้อง');
 
-      db.ref('rooms/' + code).get().then(snapshot => {
+      db.ref('phy_rooms/' + code).get().then(snapshot => {
         if(!snapshot.exists()) {
           alert('ไม่พบห้องแข่งขันนี้');
           return;
@@ -859,7 +859,7 @@
     }
 
     function listenToRoom() {
-      db.ref('rooms/' + currentRoomCode).on('value', snapshot => {
+      db.ref('phy_rooms/' + currentRoomCode).on('value', snapshot => {
         const val = snapshot.val();
         if(!val) return;
         gameState = val;
@@ -879,7 +879,7 @@
 
     function updateRoomDB() {
       if(currentRoomCode) {
-        db.ref('rooms/' + currentRoomCode).set(gameState);
+        db.ref('phy_rooms/' + currentRoomCode).set(gameState);
       }
     }
 
