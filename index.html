@@ -800,24 +800,33 @@
     }
 
     // --- ROOM CREATION & SYNCHRONIZATION ---
-    function createNewRoom() {
-      currentRoomCode = Math.floor(100000 + Math.random() * 900000).toString();
-      myRole = 'P1';
-      gameState = {
-        players: [
-          { name: 'ผู้เล่น 1', robotIdx: 0, pos: 0, crystal: 0, inventory: [] },
-          { name: 'ผู้เล่น 2', robotIdx: 1, pos: 0, crystal: 0, inventory: [] }
-        ],
-        turn: 0,
-        status: 'LOBBY',
-        diceValue: 1
-      };
+   function createNewRoom() {
+  currentRoomCode = Math.floor(100000 + Math.random() * 900000).toString();
+  myRole = 'P1';
+  gameState = {
+    players: [
+      { name: 'ผู้เล่น 1', robotIdx: 0, pos: 0, crystal: 0, inventory: [] },
+      { name: 'ผู้เล่น 2', robotIdx: 1, pos: 0, crystal: 0, inventory: [] }
+    ],
+    turn: 0,
+    status: 'LOBBY',
+    diceValue: 1
+  };
 
-      db.ref('phy_rooms/' + currentRoomCode).set(gameState).then(() => {
-        listenToRoom();
-        setupLobbyUI();
-      });
-    }
+  // 1. สลับไปหน้าห้องทันที ไม่ต้องรอเซิร์ฟเวอร์ตอบกลับ
+  setupLobbyUI();
+  listenToRoom();
+
+  // 2. บันทึกลง Firebase พร้อมระบบแจ้งเตือน Error
+  db.ref('phy_rooms/' + currentRoomCode).set(gameState)
+    .then(() => {
+      console.log("สร้างห้องสำเร็จ: " + currentRoomCode);
+    })
+    .catch(error => {
+      console.error("Firebase Error: ", error);
+      alert("⚠️ ไม่สามารถสร้างห้องบน Firebaseได้: " + error.message + "\n(กรุณาตรวจสอบสิทธิ์ Database Rules ของ Firebase)");
+    });
+}
 
     function showRoomJoinModal(isSpectator) {
       myRole = isSpectator ? 'SPECTATOR' : 'P2';
@@ -830,20 +839,25 @@
     }
 
     function confirmJoinRoom() {
-      const code = document.getElementById('join-room-code-input').value.trim().toUpperCase();
-      if(!code) return alert('กรุณาป้อนรหัสห้อง');
+  const code = document.getElementById('join-room-code-input').value.trim().toUpperCase();
+  if(!code) return alert('กรุณาป้อนรหัสห้อง');
 
-      db.ref('phy_rooms/' + code).get().then(snapshot => {
-        if(!snapshot.exists()) {
-          alert('ไม่พบห้องแข่งขันนี้');
-          return;
-        }
-        currentRoomCode = code;
-        closeRoomInputModal();
-        listenToRoom();
-        setupLobbyUI();
-      });
-    }
+  db.ref('phy_rooms/' + code).get()
+    .then(snapshot => {
+      if(!snapshot.exists()) {
+        alert('ไม่พบห้องแข่งขันนี้');
+        return;
+      }
+      currentRoomCode = code;
+      closeRoomInputModal();
+      setupLobbyUI();
+      listenToRoom();
+    })
+    .catch(error => {
+      console.error("Firebase Error: ", error);
+      alert("⚠️ ไม่สามารถเชื่อมต่อห้องได้: " + error.message);
+    });
+}
 
     function setupLobbyUI() {
       showView('view-char-select');
