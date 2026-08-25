@@ -1,0 +1,1868 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PHYSICS FORCE ADVENTURE - ศึกการประลองแรงฟิสิกส์ออนไลน์</title>
+  
+  <!-- Firebase SDK Compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --panel-bg: #1e293b;
+      --card-bg: #334155;
+      --accent-gold: #f59e0b;
+      --accent-blue: #3b82f6;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-purple: #8b5cf6;
+      --accent-orange: #f97316;
+      --accent-pink: #ec4899;
+    }
+
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 0; }
+    body { background-color: var(--bg-dark); color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+
+    .hidden { display: none !important; }
+    button { cursor: pointer; border: none; border-radius: 8px; font-weight: bold; transition: all 0.2s ease-in-out; }
+    button:hover { opacity: 0.95; transform: translateY(-2px); }
+    button:active { transform: translateY(0); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+    /* --- Views --- */
+    .view { width: 100%; max-width: 1100px; background: var(--panel-bg); border-radius: 20px; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.6); border: 1px solid #475569; }
+
+    /* Main Menu */
+    .menu-container { text-align: center; padding: 30px 20px; }
+    .menu-title { font-size: 2.8rem; color: var(--accent-gold); margin-bottom: 10px; text-shadow: 0 0 15px rgba(245, 158, 11, 0.5); letter-spacing: 1px; }
+    .menu-subtitle { font-size: 1.25rem; color: #94a3b8; margin-bottom: 30px; }
+    .menu-btn { display: block; width: 300px; margin: 12px auto; padding: 16px; font-size: 1.15rem; color: white; background: linear-gradient(135deg, var(--accent-blue), #1d4ed8); border-radius: 12px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
+    .menu-btn.create { background: linear-gradient(135deg, var(--accent-green), #047857); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); }
+    .menu-btn.join { background: linear-gradient(135deg, var(--accent-orange), #c2410c); box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4); }
+    .menu-btn.spectate { background: linear-gradient(135deg, var(--accent-cyan), #0284c7); box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4); }
+    .menu-btn.hof { background: linear-gradient(135deg, var(--accent-purple), #6d28d9); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4); }
+
+    /* Room Setup UI */
+    .room-box { max-width: 450px; margin: 0 auto; background: #0f172a; border-radius: 16px; padding: 25px; border: 1px solid #334155; text-align: center; }
+    .room-code-badge { font-size: 2.2rem; font-weight: bold; color: var(--accent-gold); letter-spacing: 4px; background: rgba(245, 158, 11, 0.15); border: 2px dashed var(--accent-gold); padding: 10px; border-radius: 12px; margin: 15px 0; }
+    .role-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; margin-bottom: 15px; }
+    .role-p1 { background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); }
+    .role-p2 { background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); border: 1px solid var(--accent-orange); }
+    .role-spec { background: rgba(139, 92, 246, 0.2); color: var(--accent-purple); border: 1px solid var(--accent-purple); }
+
+    /* Character Selection View */
+    .char-select-header { text-align: center; margin-bottom: 25px; }
+    .char-select-title { font-size: 2rem; color: var(--accent-cyan); text-shadow: 0 0 10px rgba(6, 182, 212, 0.4); }
+    .char-select-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; }
+    
+    .player-select-box { background: #0f172a; padding: 20px; border-radius: 16px; border: 2px solid #334155; }
+    .player-select-box.p1-box { border-color: var(--accent-cyan); }
+    .player-select-box.p2-box { border-color: var(--accent-orange); }
+
+    .player-title-tag { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; margin-bottom: 12px; }
+    .p1-tag { background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); }
+    .p2-tag { background: rgba(249, 115, 22, 0.2); color: var(--accent-orange); border: 1px solid var(--accent-orange); }
+
+    .name-input-group { margin-bottom: 15px; }
+    .name-input-group label { display: block; font-size: 0.9rem; color: #94a3b8; margin-bottom: 5px; text-align: left; }
+    .name-input { width: 100%; padding: 10px 14px; background: #1e293b; border: 1px solid #475569; border-radius: 8px; color: white; font-size: 1rem; outline: none; }
+    .name-input:focus { border-color: var(--accent-gold); }
+
+    .robot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 10px; padding: 10px 5px; }
+    
+    .robot-card { 
+      background: #1e293b; border: 2px solid #334155; border-radius: 12px; padding: 14px 6px; 
+      text-align: center; cursor: pointer; transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative;
+    }
+    .robot-card:hover { border-color: var(--accent-gold); transform: translateY(-4px); }
+
+    .robot-icon { display: flex; justify-content: center; align-items: center; min-height: 55px; margin-bottom: 8px; overflow: visible; }
+    .robot-icon img { width: 44px; height: 44px; object-fit: contain; transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .robot-name { font-size: 0.8rem; font-weight: bold; color: #e2e8f0; display: block; margin-top: 4px; }
+    .robot-desc { font-size: 0.68rem; color: #94a3b8; display: block; margin-top: 2px; }
+
+    .p1-box .robot-card.selected { 
+      border-color: var(--accent-cyan); background: rgba(6, 182, 212, 0.18); 
+      box-shadow: 0 0 25px rgba(6, 182, 212, 0.7), inset 0 0 12px rgba(6, 182, 212, 0.4); 
+      transform: translateY(-2px); z-index: 10;
+    }
+    .p1-box .robot-card.selected .robot-icon img { transform: scale(3) translateY(-8px); filter: drop-shadow(0 0 14px var(--accent-cyan)) drop-shadow(0 0 4px #ffffff); }
+
+    .p2-box .robot-card.selected { 
+      border-color: var(--accent-orange); background: rgba(249, 115, 22, 0.18); 
+      box-shadow: 0 0 25px rgba(249, 115, 22, 0.7), inset 0 0 12px rgba(249, 115, 22, 0.4); 
+      transform: translateY(-2px); z-index: 10;
+    }
+    .p2-box .robot-card.selected .robot-icon img { transform: scale(3) translateY(-8px); filter: drop-shadow(0 0 14px var(--accent-orange)) drop-shadow(0 0 4px #ffffff); }
+
+    .start-battle-btn { display: block; width: 100%; max-width: 320px; margin: 0 auto; padding: 16px; font-size: 1.3rem; background: linear-gradient(135deg, #10b981, #059669); color: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Hall of Fame */
+    .hof-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .podium { display: flex; justify-content: center; align-items: flex-end; gap: 15px; margin-bottom: 30px; }
+    .podium-card { background: #334155; padding: 15px; border-radius: 12px; text-align: center; width: 130px; }
+    .podium-card.r1 { height: 170px; border: 2px solid var(--accent-gold); background: #475569; }
+    .podium-card.r2 { height: 140px; }
+    .podium-card.r3 { height: 120px; }
+    .hof-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    .hof-table th, .hof-table td { padding: 12px; text-align: center; border-bottom: 1px solid #334155; }
+
+    /* Game Screen Layout */
+    .game-layout { display: grid; grid-template-columns: 1fr 310px; gap: 20px; }
+    
+    .board-frame { 
+      position: relative; width: 100%; aspect-ratio: 45.68 / 42.86; 
+      background-image: url('board.png'); background-size: 100% 100%; background-repeat: no-repeat; background-position: center; 
+      border-radius: 16px; border: 3px solid #334155; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+    }
+
+    .board-grid { position: relative; width: 100%; height: 100%; }
+
+    .tile { 
+      position: absolute; width: 10%; height: 10%; transform: translate(-50%, -50%); 
+      display: flex; flex-direction: column; align-items: center; justify-content: center; background: transparent; border-radius: 50%; border: none;
+    }
+
+    .tile.special-tile {
+      background: rgba(245, 158, 11, 0.25);
+      border: 2px solid var(--accent-gold) !important;
+      box-shadow: 0 0 18px rgba(245, 158, 11, 0.9), inset 0 0 10px rgba(245, 158, 11, 0.6);
+      animation: pulseSpecial 1.4s infinite alternate ease-in-out;
+      z-index: 2;
+    }
+    .tile.special-tile::before {
+      content: '⭐'; position: absolute; top: -10px; font-size: 0.85rem;
+      filter: drop-shadow(0 0 4px var(--accent-gold));
+    }
+    @keyframes pulseSpecial {
+      0% { transform: translate(-50%, -50%) scale(0.95); box-shadow: 0 0 10px rgba(245, 158, 11, 0.6); }
+      100% { transform: translate(-50%, -50%) scale(1.15); box-shadow: 0 0 25px rgba(245, 158, 11, 1), inset 0 0 12px rgba(255, 255, 255, 0.8); }
+    }
+
+    .tile.challenge-tile {
+      background: rgba(139, 92, 246, 0.25);
+      border: 2px solid var(--accent-purple) !important;
+      box-shadow: 0 0 18px rgba(139, 92, 246, 0.9), inset 0 0 10px rgba(139, 92, 246, 0.6);
+      animation: pulseChallenge 1.4s infinite alternate ease-in-out;
+      z-index: 2;
+    }
+    .tile.challenge-tile::before {
+      content: '🎯'; position: absolute; top: -10px; font-size: 0.85rem;
+      filter: drop-shadow(0 0 4px var(--accent-purple));
+    }
+    @keyframes pulseChallenge {
+      0% { transform: translate(-50%, -50%) scale(0.95); box-shadow: 0 0 10px rgba(139, 92, 246, 0.6); }
+      100% { transform: translate(-50%, -50%) scale(1.15); box-shadow: 0 0 25px rgba(236, 72, 153, 1), inset 0 0 12px rgba(255, 255, 255, 0.8); }
+    }
+
+    .tile-num { position: absolute; top: 22px; font-weight: bold; color: #ffffff; font-size: 1rem; text-shadow: 0 1px 3px black, 0 0 5px rgba(0,0,0,0.8); pointer-events: none; }
+
+    .tokens { 
+      position: absolute; top: -35px; display: flex; gap: 2px; justify-content: center; align-items: center; z-index: 20; pointer-events: none; 
+    }
+
+    .token-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 58px; height: 68px;
+      border-radius: 0; background: transparent; border: none;
+      overflow: visible; animation: bounce 0.5s ease infinite alternate;
+      position: relative;
+    }
+
+    .token-badge img { 
+      width: 100%; height: 100%; object-fit: contain; 
+      filter: drop-shadow(0 0 8px var(--accent-gold)) drop-shadow(0 0 15px rgba(245, 158, 11, 0.8)) drop-shadow(0 0 3px #ffffff);
+      transition: all 0.3s ease;
+    }
+
+    .token-badge.p1-token img {
+      filter: drop-shadow(0 0 8px var(--accent-cyan)) drop-shadow(0 0 18px rgba(6, 182, 212, 0.95)) drop-shadow(0 0 4px #ffffff);
+    }
+
+    .token-badge.p2-token img {
+      filter: drop-shadow(0 0 8px var(--accent-orange)) drop-shadow(0 0 18px rgba(249, 115, 22, 0.95)) drop-shadow(0 0 4px #ffffff);
+    }
+
+    @keyframes bounce { 
+      0% { transform: translateY(0); } 
+      100% { transform: translateY(-6px); } 
+    }
+
+    /* Sidebar HUD */
+    .hud { display: flex; flex-direction: column; gap: 15px; }
+    .hud-box { background: #0f172a; border-radius: 14px; padding: 16px; border: 1px solid #334155; }
+    
+    .player-card { padding: 12px; border-radius: 10px; margin-bottom: 10px; background: #1e293b; border: 2px solid transparent; transition: all 0.35s ease; }
+    .player-card.active { border-color: var(--accent-gold); background: rgba(245, 158, 11, 0.12); box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); }
+    
+    .player-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+    .player-card-icon { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; overflow: visible; }
+    .player-card-icon img { width: 40px; height: 40px; object-fit: contain; transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+    #p1-card.active .player-card-icon img { transform: scale(2); filter: drop-shadow(0 0 10px var(--accent-cyan)) drop-shadow(0 0 3px #ffffff); }
+    #p2-card.active .player-card-icon img { transform: scale(2); filter: drop-shadow(0 0 10px var(--accent-orange)) drop-shadow(0 0 3px #ffffff); }
+
+    .player-card-name { font-weight: bold; font-size: 1rem; color: #f8fafc; }
+    .player-card-title { font-size: 0.75rem; color: var(--accent-cyan); display: block; }
+
+    .inventory-bar { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .inv-item-btn {
+      background: #0f172a; border: 1px solid #475569; border-radius: 6px;
+      padding: 4px 8px; font-size: 0.75rem; color: white; display: flex; align-items: center; gap: 4px;
+    }
+    .inv-item-btn:hover:not(:disabled) { border-color: var(--accent-gold); background: #334155; }
+    .inv-item-btn.active-buff { border-color: var(--accent-green); background: rgba(16, 185, 129, 0.2); animation: pulse 1s infinite alternate; }
+
+    .dice-btn { width: 100%; padding: 15px; font-size: 1.25rem; background: linear-gradient(135deg, var(--accent-gold), #d97706); color: #0f172a; font-weight: bold; border-radius: 10px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); margin-top: 10px; }
+    .shop-open-btn { width: 100%; padding: 10px; font-size: 0.95rem; background: linear-gradient(135deg, var(--accent-purple), #6d28d9); color: white; font-weight: bold; border-radius: 10px; margin-top: 10px; }
+
+    /* 3D DICE SYSTEM */
+    .dice-scene { width: 110px; height: 110px; margin: 15px auto 5px; perspective: 600px; position: relative; display: flex; justify-content: center; align-items: center; }
+    .cube { width: 70px; height: 70px; position: relative; transform-style: preserve-3d; transition: transform 2.2s cubic-bezier(0.1, 0.88, 0.25, 1.12); transform: rotateX(-22deg) rotateY(-35deg); }
+    .cube-face { position: absolute; width: 70px; height: 70px; background: linear-gradient(145deg, #1e293b, #0f172a); border: 2px solid var(--accent-gold); border-radius: 14px; box-shadow: inset 0 0 10px rgba(245, 158, 11, 0.3); display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); padding: 6px; box-sizing: border-box; backface-visibility: hidden; }
+    .pip { display: block; background: var(--accent-gold); border-radius: 50%; width: 11px; height: 11px; margin: auto; box-shadow: 0 0 6px var(--accent-gold); }
+    
+    .cube-face.face-1 { transform: rotateY(  0deg) translateZ(35px); }
+    .cube-face.face-6 { transform: rotateY(180deg) translateZ(35px); }
+    .cube-face.face-3 { transform: rotateY( 90deg) translateZ(35px); }
+    .cube-face.face-4 { transform: rotateY(-90deg) translateZ(35px); }
+    .cube-face.face-2 { transform: rotateX( 90deg) translateZ(35px); }
+    .cube-face.face-5 { transform: rotateX(-90deg) translateZ(35px); }
+    .cube-face.face-1 .pip { width: 16px; height: 16px; background: var(--accent-orange); box-shadow: 0 0 10px var(--accent-orange); }
+
+    .dice-shadow { position: absolute; bottom: -10px; width: 65px; height: 18px; background: rgba(0, 0, 0, 0.65); border-radius: 50%; filter: blur(6px); transition: all 2.2s ease-out; transform: scale(1); }
+    .rolling-shadow { animation: shadowJump 2.2s ease-out; }
+    @keyframes shadowJump { 0% { transform: scale(1); opacity: 0.8; } 20% { transform: scale(0.4); opacity: 0.2; } 80% { transform: scale(0.6); opacity: 0.4; } 100% { transform: scale(1); opacity: 0.8; } }
+
+    /* MODAL DIALOGS */
+    .modal { 
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+      background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(8px); 
+      display: flex; justify-content: center; align-items: center; z-index: 100; 
+      animation: fadeIn 0.3s ease-out;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal-card { 
+      background: linear-gradient(165deg, #1e293b 0%, #0f172a 100%); 
+      padding: 28px; border-radius: 24px; text-align: center; 
+      width: 480px; max-width: 92%; 
+      border: 2px solid var(--accent-cyan); 
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(6, 182, 212, 0.3); 
+      animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative; overflow: hidden;
+    }
+    @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+    /* SHOP STYLES */
+    .shop-modal-card { width: 620px; text-align: left; }
+    .shop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 12px; }
+    .shop-title { color: var(--accent-gold); font-size: 1.6rem; display: flex; align-items: center; gap: 8px; }
+    .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-height: 60vh; overflow-y: auto; padding-right: 4px; }
+    .shop-item-card {
+      background: #0f172a; border: 1px solid #334155; border-radius: 14px; padding: 14px;
+      display: flex; flex-direction: column; justify-content: space-between; transition: all 0.25s ease;
+    }
+    .shop-item-card:hover { border-color: var(--accent-purple); transform: translateY(-2px); }
+    .shop-item-info strong { font-size: 1.05rem; color: #f8fafc; display: block; margin-bottom: 4px; }
+    .shop-item-info p { font-size: 0.78rem; color: #94a3b8; line-height: 1.3; }
+    .shop-item-buy { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+    .shop-price { font-weight: bold; color: var(--accent-gold); font-size: 0.95rem; }
+    .btn-buy { background: linear-gradient(135deg, var(--accent-gold), #d97706); color: #0f172a; padding: 6px 14px; font-size: 0.85rem; border-radius: 8px; }
+
+    .badge-group { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+
+    .realm-badge {
+      display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px;
+      font-size: 0.85rem; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;
+      background: rgba(6, 182, 212, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan);
+    }
+
+    .special-bonus-badge {
+      display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px;
+      font-size: 0.85rem; font-weight: bold;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(236, 72, 153, 0.3)); 
+      border: 1px solid var(--accent-gold); color: var(--accent-gold);
+      animation: bonusPulse 1s infinite alternate;
+    }
+    @keyframes bonusPulse { 0% { transform: scale(1); } 100% { transform: scale(1.06); } }
+
+    .choice-container { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
+    .choice-btn {
+      display: flex; justify-content: space-between; align-items: center; padding: 14px 18px;
+      border-radius: 12px; font-size: 1rem; color: white; text-align: left; border: 1px solid rgba(255,255,255,0.1);
+    }
+    .choice-btn:hover:not(:disabled) { transform: translateY(-3px) scale(1.02); }
+    .choice-easy { background: linear-gradient(135deg, #10b981, #047857); }
+    .choice-hard { background: linear-gradient(135deg, #f59e0b, #b45309); }
+    .choice-duel { background: linear-gradient(135deg, #ef4444, #b91c1c); animation: duelGlow 1.2s infinite alternate; }
+    @keyframes duelGlow { 0% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); } 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.9); } }
+
+    .choice-multiplier { font-size: 1.1rem; font-weight: 800; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 20px; }
+
+    .timer-container {
+      background: rgba(15, 23, 42, 0.9); border: 1px solid #334155; border-radius: 12px;
+      padding: 8px 12px; margin-bottom: 16px; position: relative; overflow: hidden;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .timer-info { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: bold; color: #94a3b8; }
+    .timer-count-badge { font-size: 1.1rem; color: var(--accent-gold); font-weight: 800; }
+    .timer-progress-bg { width: 100%; height: 8px; background: #0f172a; border-radius: 4px; overflow: hidden; border: 1px solid #334155; }
+    .timer-progress-bar { height: 100%; width: 100%; background: var(--accent-cyan); transition: width 1s linear, background-color 0.3s ease; }
+
+    .timer-container.urgent .timer-count-badge { color: var(--accent-red); animation: timerPulse 0.5s infinite alternate; }
+    .timer-container.urgent .timer-progress-bar { background: var(--accent-red); }
+    @keyframes timerPulse { 0% { transform: scale(1); } 100% { transform: scale(1.2); } }
+
+    .question-box {
+      background: rgba(15, 23, 42, 0.7); border: 1px solid #334155; border-radius: 16px;
+      padding: 18px; margin-bottom: 22px; box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+    }
+    .question-label { font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 6px; text-transform: uppercase; }
+    .question-text { font-size: 1.5rem; color: #ffffff; font-weight: 700; text-shadow: 0 0 12px rgba(255, 255, 255, 0.4); line-height: 1.4; }
+
+    .input-wrapper { position: relative; margin-bottom: 20px; }
+    .modal-card input { 
+      width: 100%; padding: 14px; font-size: 1.5rem; font-weight: bold;
+      border-radius: 12px; border: 2px solid #475569; background: #0f172a; color: white; 
+      text-align: center; outline: none; transition: all 0.3s ease;
+    }
+    .modal-card input:focus { border-color: var(--accent-cyan); box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); }
+
+    .btn-submit {
+      width: 100%; padding: 16px; font-size: 1.1rem; font-weight: bold; border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent-cyan), #0284c7); color: white;
+      box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4); text-transform: uppercase;
+    }
+
+    /* Solution Screen */
+    .result-icon-container { width: 110px; height: 110px; margin: 0 auto 12px; display: flex; justify-content: center; align-items: center; position: relative; }
+    .result-title { font-size: 1.8rem; font-weight: bold; margin-bottom: 15px; }
+
+    .solution-box {
+      background: rgba(15, 23, 42, 0.8); border-radius: 14px; padding: 16px;
+      margin-bottom: 20px; border: 1px solid #334155; text-align: left;
+    }
+    .solution-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 0.95rem; color: #94a3b8; }
+    .solution-item strong { font-size: 1.1rem; font-weight: bold; }
+    .user-ans { color: #f8fafc; }
+    .correct-ans { color: var(--accent-green); }
+
+    .reward-box {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      background: rgba(245, 158, 11, 0.2); border: 1px solid var(--accent-gold); color: var(--accent-gold);
+      padding: 10px 20px; border-radius: 30px; font-weight: bold; font-size: 1.2rem;
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); margin-bottom: 22px;
+      animation: pulse 1.2s infinite alternate;
+    }
+    @keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.05); } }
+
+    .modal-card.correct-mode { border-color: var(--accent-green); box-shadow: 0 0 40px rgba(16, 185, 129, 0.5); }
+    .modal-card.correct-mode .result-title { color: var(--accent-green); }
+
+    .modal-card.incorrect-mode { 
+      border-color: var(--accent-red); box-shadow: 0 0 40px rgba(239, 68, 68, 0.5); 
+      animation: shake 0.4s ease-in-out;
+    }
+    .modal-card.incorrect-mode .result-title { color: var(--accent-red); }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+
+    .btn-next {
+      width: 100%; padding: 15px; font-size: 1.1rem; font-weight: bold; border-radius: 12px;
+      background: linear-gradient(135deg, #475569, #334155); color: white;
+    }
+    .correct-mode .btn-next { background: linear-gradient(135deg, var(--accent-green), #059669); }
+
+    /* SVG Animations */
+    .firework-svg, .explosion-svg { width: 100%; height: 100%; overflow: visible; }
+    .firework-spark { transform-origin: center; animation: fireworkBurst 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) infinite; }
+    .firework-star { animation: sparkle 0.8s ease-in-out infinite alternate; }
+    @keyframes fireworkBurst { 0% { transform: scale(0.2); opacity: 0; } 50% { opacity: 1; } 100% { transform: scale(1.3); opacity: 0; } }
+    @keyframes sparkle { 0% { opacity: 0.3; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.2); } }
+
+    .exp-blast { transform-origin: center; animation: expBlast 0.8s cubic-bezier(0.1, 0.9, 0.2, 1) infinite; }
+    .exp-flame { transform-origin: center; animation: flameFlicker 0.4s ease-in-out infinite alternate; }
+    .exp-shockwave { transform-origin: center; animation: shockwave 0.9s cubic-bezier(0, 0.6, 0.4, 1) infinite; }
+    @keyframes expBlast { 0% { transform: scale(0.3); opacity: 0.2; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 0.9; } }
+    @keyframes flameFlicker { 0% { transform: scale(0.9) rotate(-3deg); fill: #f97316; } 100% { transform: scale(1.15) rotate(4deg); fill: #ef4444; } }
+    @keyframes shockwave { 0% { transform: scale(0.2); opacity: 1; stroke-width: 6; } 100% { transform: scale(1.6); opacity: 0; stroke-width: 1; } }
+    
+    /* 📱 CSS ปรับแต่งเพิ่มเติมสำหรับหน้าจอมือถือ */
+    @media (max-width: 640px) {
+        .game-board {
+            transform: scale(0.9);
+            transform-origin: top center;
+        }
+        
+        .modal-content {
+            width: 95% !important;
+            padding: 1rem !important;
+        }
+        
+        .dice-container {
+            scale: 0.8;
+        }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. MAIN MENU VIEW -->
+  <div id="view-menu" class="view">
+    <div class="menu-container">
+      <img src="logo.png" alt="Logo" style="display: block; margin: 0 auto 20px auto; max-width: 220px; height: auto;">
+      <h1 class="menu-title">⚔️ PHYSICS FORCE ADVENTURE ⚔️</h1>
+      <p class="menu-subtitle">⚛️ ศึกการประลองปัญญาฟิสิกส์ พิชิตอาณาจักรเรื่องแรงลัพธ์</p>
+      
+      <button class="menu-btn create" onclick="createNewRoom()">🎮 สร้างห้องใหม่ (Host P1)</button>
+      <button class="menu-btn join" onclick="showRoomJoinModal(false)">🌐 เข้าร่วมห้อง (Player 2)</button>
+      <button class="menu-btn spectate" onclick="showRoomJoinModal(true)">👁️ เข้าชมการแข่งขัน (Spectator)</button>
+      <button class="menu-btn shop" onclick="openShopModal(true)">🛒 ร้านค้าแลกคริสตัล</button>
+      <button class="menu-btn hof" onclick="showHOF()">🏆 หอเกียรติยศ (Hall of Fame)</button>
+    </div>
+  </div>
+
+  <!-- 1.5 ROOM JOIN/SPECTATE MODAL -->
+  <div id="room-input-modal" class="modal hidden">
+    <div class="modal-card">
+      <h2 id="room-modal-title" style="color:var(--accent-gold); margin-bottom:15px;">🌐 เข้าร่วมห้องเล่นเกม</h2>
+      <div class="name-input-group">
+        <label>รหัสห้อง (Room Code 6 หลัก):</label>
+        <input type="text" id="join-room-code-input" placeholder="เช่น 482910" style="text-transform:uppercase; letter-spacing:2px;">
+      </div>
+      <button onclick="confirmJoinRoom()" class="btn-submit" style="margin-top:10px;">🚀 เข้าสู่ห้องแข่งขัน</button>
+      <button onclick="closeRoomInputModal()" style="margin-top:10px; background:transparent; color:#94a3b8; width:100%;">ยกเลิก</button>
+    </div>
+  </div>
+
+  <!-- 2. CHARACTER SELECTION VIEW (LOBBY) -->
+  <div id="view-char-select" class="view hidden">
+    <div class="char-select-header">
+      <h2 class="char-select-title">⚛️ ห้องเตรียมพร้อมลงสู่สมรภูมิฟิสิกส์</h2>
+      <div id="room-code-display" class="room-code-badge">ROOM: ------</div>
+      <div id="my-role-tag" class="role-badge role-p1">คุณคือ: ผู้เล่น 1</div>
+    </div>
+
+    <div class="char-select-grid">
+      <div class="player-select-box p1-box">
+        <span class="player-title-tag p1-tag">🎮 ผู้เล่นคนแรก (P1)</span>
+        <div class="name-input-group">
+          <label for="p1-name-input">ชื่อนักฟิสิกส์ P1:</label>
+          <input type="text" id="p1-name-input" class="name-input" value="เด็กเวกเตอร์สายพุ่ง" oninput="updatePlayerLobbyInfo()">
+        </div>
+        <label style="font-size:0.85rem; color:#94a3b8;">เลือกยูนิตนักฟิสิกส์:</label>
+        <div class="robot-grid" id="p1-robot-grid"></div>
+      </div>
+
+      <div class="player-select-box p2-box">
+        <span class="player-title-tag p2-tag">🎮 ผู้เล่นคนที่สอง (P2)</span>
+        <div class="name-input-group">
+          <label for="p2-name-input">ชื่อนักฟิสิกส์ P2:</label>
+          <input type="text" id="p2-name-input" class="name-input" value="น้องมวลสารสายบวก" oninput="updatePlayerLobbyInfo()">
+        </div>
+        <label style="font-size:0.85rem; color:#94a3b8;">เลือกยูนิตนักฟิสิกส์:</label>
+        <div class="robot-grid" id="p2-robot-grid"></div>
+      </div>
+    </div>
+
+    <button id="btn-start-game" class="start-battle-btn" onclick="confirmStartGame()">🚀 พร้อมลุย! เริ่มการแข่งขัน</button>
+    <div style="text-align: center; margin-top: 15px;">
+      <button onclick="showMenu()" style="background: transparent; color: #94a3b8; padding: 6px 16px; font-size: 0.9rem;">⬅️ ออกจากห้อง / กลับเมนูหลัก</button>
+    </div>
+  </div>
+
+  <!-- 3. HALL OF FAME VIEW -->
+  <div id="view-hof" class="view hidden">
+    <div class="hof-header">
+      <h2>🏆 หอเกียรติยศนักฟิสิกส์ประจำวิชา</h2>
+      <button onclick="showMenu()" style="padding: 8px 16px; background: #475569; color: white;">⬅️ เมนูหลัก</button>
+    </div>
+    <div class="podium">
+      <div class="podium-card r2"><div>🥈</div><strong id="hof-name-2">-</strong><div style="color:var(--accent-blue)" id="hof-score-2">0 💎</div></div>
+      <div class="podium-card r1"><div>👑</div><strong id="hof-name-1">-</strong><div style="color:var(--accent-gold)" id="hof-score-1">0 💎</div></div>
+      <div class="podium-card r3"><div>🥉</div><strong id="hof-name-3">-</strong><div style="color:#cd7f32" id="hof-score-3">0 💎</div></div>
+    </div>
+    <table class="hof-table">
+      <thead><tr><th>อันดับ</th><th>ชื่อนักฟิสิกส์</th><th>ยูนิต</th><th>คะแนน Crystal</th></tr></thead>
+      <tbody id="hof-list"></tbody>
+    </table>
+  </div>
+
+  <!-- 4. GAME VIEW -->
+  <div id="view-game" class="view hidden">
+    <div class="game-layout">
+      <div class="board-frame">
+        <div id="board-grid" class="board-grid"></div>
+      </div>
+
+      <div class="hud">
+        <div class="hud-box">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3 style="color:var(--accent-cyan); font-size:1rem;">สถานะยูนิตนักฟิสิกส์</h3>
+            <span id="game-room-code" style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold;">ROOM: -</span>
+          </div>
+          
+          <div id="p1-card" class="player-card active">
+            <div class="player-card-header">
+              <span id="p1-card-icon" class="player-card-icon"></span>
+              <div>
+                <span id="p1-card-name" class="player-card-name">ผู้เล่น 1</span>
+                <span id="p1-card-title" class="player-card-title">VECTOR-01</span>
+              </div>
+            </div>
+            <div style="font-size:0.9rem; margin-top:5px;">Crystal: <span id="p1-crystal" style="color:var(--accent-gold); font-weight:bold;">0</span> 💎</div>
+            <div class="inventory-bar" id="p1-inventory"></div>
+          </div>
+
+          <div id="p2-card" class="player-card">
+            <div class="player-card-header">
+              <span id="p2-card-icon" class="player-card-icon"></span>
+              <div>
+                <span id="p2-card-name" class="player-card-name">ผู้เล่น 2</span>
+                <span id="p2-card-title" class="player-card-title">NEWTON-02</span>
+              </div>
+            </div>
+            <div style="font-size:0.9rem; margin-top:5px;">Crystal: <span id="p2-crystal" style="color:var(--accent-gold); font-weight:bold;">0</span> 💎</div>
+            <div class="inventory-bar" id="p2-inventory"></div>
+          </div>
+        </div>
+
+        <div class="hud-box" style="text-align: center;">
+          <div id="turn-display" style="font-weight:bold; font-size:0.95rem; color:var(--accent-gold); margin-bottom:8px; display:flex; align-items:center; justify-content:center; gap:6px;">ตาของ: ผู้เล่น 1</div>
+          
+          <div class="dice-scene">
+            <div id="cube" class="cube">
+              <div class="cube-face face-1"><div></div><div></div><div></div><div></div><div class="pip"></div><div></div><div></div><div></div><div></div></div>
+              <div class="cube-face face-2"><div class="pip"></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div class="pip"></div></div>
+              <div class="cube-face face-3"><div class="pip"></div><div></div><div></div><div></div><div class="pip"></div><div></div><div></div><div></div><div class="pip"></div></div>
+              <div class="cube-face face-4"><div class="pip"></div><div></div><div class="pip"></div><div></div><div></div><div></div><div class="pip"></div><div></div><div class="pip"></div></div>
+              <div class="cube-face face-5"><div class="pip"></div><div></div><div class="pip"></div><div></div><div class="pip"></div><div></div><div class="pip"></div><div></div><div class="pip"></div></div>
+              <div class="cube-face face-6"><div class="pip"></div><div></div><div class="pip"></div><div class="pip"></div><div></div><div class="pip"></div><div class="pip"></div><div></div><div class="pip"></div></div>
+            </div>
+            <div id="dice-shadow" class="dice-shadow"></div>
+          </div>
+
+          <button id="btn-roll" class="dice-btn" onclick="triggerRollDice()">🎲 ทอยลูกเต๋า</button>
+          <button class="shop-open-btn" onclick="openShopModal(false)">🛒 ร้านค้าคริสตัล</button>
+        </div>
+
+        <button onclick="showMenu()" style="background:#dc2626; color:white; padding:12px; font-size:0.95rem; border-radius:10px;">🚪 ออกจากเกม</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHOP MODAL -->
+  <div id="shop-modal" class="modal hidden">
+    <div class="modal-card shop-modal-card">
+      <div class="shop-header">
+        <h2 class="shop-title">🛒 ร้านค้าแลกคริสตัล (Crystal Shop)</h2>
+        <button onclick="closeShopModal()" style="background:#475569; color:white; padding:6px 14px; border-radius:8px;">❌ ปิด</button>
+      </div>
+
+      <div style="margin-bottom: 15px; background: #0f172a; padding: 10px 14px; border-radius: 10px; border: 1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
+        <div>ผู้ซื้อปัจจุบัน: <strong id="shop-player-name" style="color:var(--accent-cyan)">-</strong></div>
+        <div>คริสตัลสะสม: <strong id="shop-player-crystals" style="color:var(--accent-gold)">0</strong> 💎</div>
+      </div>
+
+      <div id="shop-items-grid" class="shop-grid"></div>
+    </div>
+  </div>
+
+  <!-- REALM ANNOUNCEMENT MODAL -->
+  <div id="realm-announce-modal" class="modal hidden">
+    <div class="modal-card" style="border-color: var(--accent-gold); box-shadow: 0 0 35px rgba(245, 158, 11, 0.5);">
+      <div id="realm-announce-icon" style="font-size: 4rem; margin-bottom: 10px;">➡️➡️</div>
+      <h2 id="realm-announce-title" style="color: var(--accent-gold); font-size: 2rem; margin-bottom: 8px;">⚔️ เข้าสู่ด่านแรงทิศเดียวกัน</h2>
+      <p id="realm-announce-desc" style="color: #94a3b8; font-size: 1rem; margin-bottom: 22px;">เตรียมพร้อมสำหรับการคำนวณแรงลัพธ์!</p>
+      <button id="btn-realm-continue" onclick="confirmRealmAnnouncement()" class="btn-submit" style="background: linear-gradient(135deg, var(--accent-gold), #d97706); color: #0f172a;">⚔️ เข้าสู่ด่านท้าทาย</button>
+    </div>
+  </div>
+
+  <!-- QUESTION & SOLUTION MODAL -->
+  <div id="question-modal" class="modal hidden">
+    <div id="modal-card" class="modal-card">
+      
+      <!-- MODE 1: เลือกความท้าทาย -->
+      <div id="modal-choice-view" class="hidden">
+        <h2 style="color:var(--accent-purple); font-size:1.6rem; margin-bottom:6px;">🎯 ช่องท้าดวลระดับพลังฟิสิกส์!</h2>
+        <p style="color:#94a3b8; font-size:0.9rem; margin-bottom:15px;">เลือกระดับความยากของโจทย์เพื่อรับโบนัส Crystal ทวีคูณ</p>
+        
+        <div class="choice-container">
+          <button id="choice-easy-btn" class="choice-btn choice-easy" onclick="triggerSelectChallenge('easy')">
+            <div>
+              <strong>🟢 แบบง่าย (Easy)</strong>
+              <div style="font-size:0.75rem; opacity:0.85;">โจทย์พื้นฐาน คิดได้รวดเร็ว</div>
+            </div>
+            <span class="choice-multiplier">x1</span>
+          </button>
+
+          <button id="choice-hard-btn" class="choice-btn choice-hard" onclick="triggerSelectChallenge('hard')">
+            <div>
+              <strong>🟡 แบบยาก (Hard)</strong>
+              <div style="font-size:0.75rem; opacity:0.85;">โจทย์ระดับปานกลาง ตัวเลขมากขึ้น</div>
+            </div>
+            <span class="choice-multiplier">x2</span>
+          </button>
+
+          <button id="choice-duel-btn" class="choice-btn choice-duel" onclick="triggerSelectChallenge('duel')">
+            <div>
+              <strong>🔥 การท้าดวล (Duel)</strong>
+              <div style="font-size:0.75rem; opacity:0.85;">โจทย์ท้าทายระดับมหาโหด!</div>
+            </div>
+            <span class="choice-multiplier">x3</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- MODE 2: หน้าต่างโจทย์คำถาม -->
+      <div id="modal-question-view" class="hidden">
+        <div class="badge-group">
+          <span id="modal-realm-tag" class="realm-badge">⚔️ ด่านแรงทิศเดียวกัน</span>
+          <span id="modal-bonus-badge" class="special-bonus-badge hidden">✨ ช่องโบนัสพิเศษ (Crystal x2!)</span>
+        </div>
+        
+        <div id="timer-box" class="timer-container">
+          <div class="timer-info">
+            <span>⏱️ เวลาในการตอบ:</span>
+            <span class="timer-count-badge"><span id="timer-count">15</span> วินาที</span>
+          </div>
+          <div class="timer-progress-bg">
+            <div id="timer-bar" class="timer-progress-bar"></div>
+          </div>
+        </div>
+
+        <div class="question-box">
+          <span class="question-label">คำนวณหาแรงลัพธ์ (N)</span>
+          <h2 id="q-text" class="question-text">แรง 5 N และ 7 N ไปทางทิศเดียวกัน แรงลัพธ์ = ?</h2>
+        </div>
+
+        <div class="input-wrapper" style="display: flex; gap: 8px;">
+          <button type="button" onclick="toggleNegativeSign()" style="padding: 0 16px; font-size: 1.5rem; font-weight: bold; background: #334155; color: var(--accent-gold); border: 2px solid #475569; border-radius: 12px;">±</button>
+          <input type="text" id="q-answer" inputmode="text" placeholder="ป้อนคำตอบตัวเลข..." autofocus autocomplete="off" style="flex: 1;">
+        </div>
+
+        <button id="btn-submit-ans" onclick="triggerSubmitAnswer()" class="btn-submit">⚡ ยืนยันคำตอบ (Enter)</button>
+      </div>
+
+      <!-- MODE 3: หน้าต่างเฉลย -->
+      <div id="modal-result-view" class="hidden">
+        <div id="result-animation-box" class="result-icon-container"></div>
+        <h3 id="result-title" class="result-title">ถูกต้องแม่นยำ!</h3>
+
+        <div class="solution-box">
+          <div class="solution-item">
+            <span>คำตอบของผู้เล่น:</span>
+            <strong id="user-ans-display" class="user-ans">12</strong>
+          </div>
+          <div class="solution-item">
+            <span>เฉลยคำตอบที่ถูกต้อง:</span>
+            <strong id="correct-ans-display" class="correct-ans">12</strong>
+          </div>
+        </div>
+
+        <div id="result-reward" class="reward-box">
+          +10 Crystal 💎
+        </div>
+
+        <button id="btn-next-turn" onclick="triggerNextTurn()" class="btn-next">➡️ ดำเนินการต่อ</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 🏆 5. END GAME / VICTORY MODAL -->
+  <div id="victory-modal" class="modal hidden">
+    <div class="modal-card" style="border-color: var(--accent-gold); box-shadow: 0 0 45px rgba(245, 158, 11, 0.7);">
+      <div style="font-size: 3.5rem; margin-bottom: 8px;">👑</div>
+      <h2 style="color: var(--accent-gold); font-size: 2.2rem; margin-bottom: 6px;">ศึกการประลองฟิสิกส์สิ้นสุดลงแล้ว!</h2>
+      <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 18px;">ยูนิตนักฟิสิกส์ได้บุกพิชิตปราสาท Zero Castle สำเร็จ</p>
+      
+      <div style="background: rgba(245, 158, 11, 0.12); border: 2px solid var(--accent-gold); border-radius: 16px; padding: 18px; margin-bottom: 22px;">
+        <div id="winner-icon-display" style="display:flex; justify-content:center; align-items:center; min-height: 70px; margin-bottom:8px;"></div>
+        <h3 id="winner-name-display" style="color: white; font-size: 1.5rem; margin-bottom:4px;">-</h3>
+        <p id="winner-stats-display" style="color: var(--accent-gold); font-weight: bold; font-size: 1.1rem;">สะสม Crystal ทั้งหมด: 0 💎</p>
+      </div>
+
+      <div style="display: flex; gap: 12px; flex-direction: column;">
+        <button onclick="closeVictoryAndShowHOF()" class="btn-submit" style="background: linear-gradient(135deg, var(--accent-purple), #6d28d9); box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);">🏆 ดูหอเกียรติยศ (Hall of Fame)</button>
+        <button onclick="showMenu()" style="padding: 14px; background: #475569; color: white; border-radius: 12px; font-weight: bold; font-size:1rem;">🚪 กลับสู่เมนูหลัก</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ----------------------------------------------------
+    // 🌐 GOOGLE SHEETS INTEGRATION CONFIGURATION
+    // ----------------------------------------------------
+    const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzg3gr_UZhrI8lVd53IytGLGDYYBkIUv9NrnJsSAvr-gQLzsLSkzCoDLjnZdPPlRQ8_/exec";
+    let hasLoggedThisGame = false;
+
+    // ----------------------------------------------------
+    // 🎵 REAL-TIME WEB AUDIO API SOUND ENGINE
+    // ----------------------------------------------------
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+      }
+
+      init() {
+        if (!this.ctx) {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playClick() {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(250, this.ctx.currentTime + 0.05);
+        gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.05);
+      }
+
+      playDiceRoll() {
+        if (!this.ctx) return;
+        let count = 0;
+        const interval = setInterval(() => {
+          if (count > 11) {
+            clearInterval(interval);
+            this.playDiceLand();
+            return;
+          }
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(160 + Math.random() * 280, this.ctx.currentTime);
+          gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.06);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.06);
+          count++;
+        }, 120);
+      }
+
+      playDiceLand() {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(659.25, this.ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.25);
+      }
+
+      playCorrect() {
+        if (!this.ctx) return;
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.value = freq;
+          const startTime = this.ctx.currentTime + idx * 0.08;
+          gain.gain.setValueAtTime(0.22, startTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(startTime);
+          osc.stop(startTime + 0.3);
+        });
+      }
+
+      playIncorrect() {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(280, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(45, this.ctx.currentTime + 0.45);
+        gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.45);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.45);
+
+        const bufferSize = this.ctx.sampleRate * 0.35;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const output = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          output[i] = Math.random() * 2 - 1;
+        }
+        const whiteNoise = this.ctx.createBufferSource();
+        whiteNoise.buffer = buffer;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(750, this.ctx.currentTime);
+        filter.frequency.linearRampToValueAtTime(90, this.ctx.currentTime + 0.35);
+
+        const noiseGain = this.ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+        noiseGain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+
+        whiteNoise.connect(filter);
+        filter.connect(noiseGain);
+        noiseGain.connect(this.ctx.destination);
+        whiteNoise.start();
+      }
+
+      playShield() {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(250, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1100, this.ctx.currentTime + 0.35);
+        gain.gain.setValueAtTime(0.22, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.35);
+      }
+
+      playShopBuy() {
+        if (!this.ctx) return;
+        const notes = [659.25, 987.77];
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          const startTime = this.ctx.currentTime + idx * 0.08;
+          gain.gain.setValueAtTime(0.18, startTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.22);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(startTime);
+          osc.stop(startTime + 0.22);
+        });
+      }
+
+      playWarp() {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1500, this.ctx.currentTime + 0.38);
+        gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.38);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.38);
+      }
+
+      playTimerTick() {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(850, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.04);
+      }
+
+      playTimerUrgent() {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(1250, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.08);
+      }
+
+      playVictory() {
+        if (!this.ctx) return;
+        const notes = [
+          { f: 523.25, d: 0.15 },
+          { f: 659.25, d: 0.15 },
+          { f: 783.99, d: 0.15 },
+          { f: 1046.50, d: 0.45 }
+        ];
+        let t = this.ctx.currentTime;
+        notes.forEach(note => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.value = note.f;
+          gain.gain.setValueAtTime(0.28, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + note.d);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(t);
+          osc.stop(t + note.d);
+          t += note.d * 0.8;
+        });
+      }
+    }
+
+    const soundEngine = new SoundEngine();
+
+    // Auto-unlock AudioContext on first user interaction
+    document.addEventListener('click', () => soundEngine.init(), { once: true });
+    document.addEventListener('click', (e) => {
+      if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+        soundEngine.playClick();
+      }
+    });
+
+    // ----------------------------------------------------
+    // 1. FIREBASE CONFIGURATION & INITIALIZATION
+    // ----------------------------------------------------
+    const firebaseConfig = {
+      apiKey: "AIzaSyAdORfy_7-KYik4Iak808g0o8cwQaav9dI",
+      authDomain: "clever-tube-503313-b7.firebaseapp.com",
+      databaseURL: "https://clever-tube-503313-b7-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "clever-tube-503313-b7",
+      storageBucket: "clever-tube-503313-b7.firebasestorage.app",
+      messagingSenderId: "227057080171",
+      appId: "1:227057080171:web:5e134ddd384f5af7989e2e",
+      measurementId: "G-4H9F6ECJD6"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // ----------------------------------------------------
+    // 2. GAME STATE & CONSTANTS
+    // ----------------------------------------------------
+    const QUESTION_TIME_LIMIT = 30;
+    const SPECIAL_TILES = [9, 16, 18, 27, 29, 36]; 
+    const CHALLENGE_TILES = [4, 7, 15, 25, 32, 39];
+    const BASE_CRYSTAL_REWARD = 10;   
+    const TOTAL_TILES = 42;
+
+    const SHOP_ITEMS = [
+      { id: 'shield', name: '🛡️ เกราะกันตอบผิด', price: 20, desc: 'ตอบผิดหรือหมดเวลาจะไม่เสียคะแนน/สิทธิ์ในรอบนี้ (ใช้งานอัตโนมัติ)' },
+      { id: 'timeExtender', name: '⏱️ นาฬิกายืดเวลา (+5s)', price: 15, desc: 'เพิ่มเวลาในการทำโจทย์ข้อถัดไปอีก 5 วินาที' },
+      { id: 'doubleCrystal', name: '✨ บูสต์คริสตัล x2', price: 25, desc: 'รับคริสตัล x2 เพิ่มเติมเมื่อตอบถูกในข้อถัดไป' },
+      { id: 'warpBoost', name: '🚀 เทอร์โบบูสต์ (+3 ช่อง)', price: 30, desc: 'เร่งพลังงานเดินหน้าเพิ่มทันที 3 ช่อง (กดใช้ก่อนทอยเต๋า)' }
+    ];
+
+    // ข้อมูลยูนิตตัวละครฟิสิกส์ 6 ตัว (ปรับชื่อกวนๆ อิงฟิสิกส์สำหรับวัยรุ่น)
+    const ROBOT_PRESETS = [
+      { id: 'p01', name: 'เวกเตอร์หัวร้อน', image: 'images/p01.png', desc: 'มีทั้งขนาดและทิศทาง พร้อมพุ่งชน!', title: 'สายเวกเตอร์ พุ่งชนมีทิศทาง' },
+      { id: 'p02', name: 'ความเร็วแสงซิ่งฟึ้บ', image: 'images/p02.png', desc: 'เคลื่อนที่เร็วปานแสง ครูทักไม่ทัน!', title: 'สายจลนศาสตร์ วิ่งตัดหน้าแสง' },
+      { id: 'p03', name: 'ป๋านิวตันแอปเปิ้ลตก', image: 'images/p03.png', desc: 'โดนแอปเปิ้ลตกใส่หัวจนฉลาดเฉียบ!', title: 'สายพลศาสตร์ เจ้าพ่อแรงดึงดูด' },
+      { id: 'p04', name: 'เอนโทรปีสายหัวร้อน', image: 'images/p04.png', desc: 'ความร้อนพุ่งสูง อุณหภูมิพร้อมระเบิด!', title: 'สายอุณหพลศาสตร์ เดือดสุดขีด' },
+      { id: 'p05', name: 'มิติเวลาสายเลท', image: 'images/p05.png', desc: 'ยืดเวลาส่งงานด้วยสัมพัทธภาพ!', title: 'สายปริภูมิ-กาล ยืดเวลาเก่ง' },
+      { id: 'p06', name: 'สมดุลกลนิ่งเป็นหิน', image: 'images/p06.png', desc: 'แรงลัพธ์เป็นศูนย์ นิ่งสงบจนนึกว่าหลับ!', title: 'สายสมดุล นิ่งไม่ไหวติง' }
+    ];
+
+    const tilePositions = [
+      { left: 23.6, top: 13.5 }, { left: 29.4, top: 12.3 }, { left: 34.8, top: 11.9 }, { left: 40.4, top: 12.4 }, 
+      { left: 45.9, top: 13.1 }, { left: 51.4, top: 12.9 }, { left: 57.4, top: 12.7 }, { left: 63.1, top: 12.5 }, 
+      { left: 68.8, top: 12.2 }, { left: 74.2, top: 12.0 }, { left: 79.8, top: 13.4 }, { left: 84.8, top: 14.9 }, 
+      { left: 83.6, top: 21.9 }, { left: 84.5, top: 29.9 }, { left: 86.7, top: 37.6 }, { left: 86.7, top: 43.8 }, 
+      { left: 84.4, top: 51.8 }, { left: 84.1, top: 59.1 }, { left: 85.9, top: 66.6 }, { left: 86.3, top: 73.6 }, 
+      { left: 83.7, top: 80.7 }, { left: 79.1, top: 87.8 }, { left: 72.0, top: 86.9 }, { left: 65.4, top: 87.0 }, 
+      { left: 59.6, top: 87.2 }, { left: 54.2, top: 87.6 }, { left: 48.6, top: 88.3 }, { left: 43.5, top: 88.0 }, 
+      { left: 37.9, top: 88.0 }, { left: 32.9, top: 86.9 }, { left: 27.8, top: 86.2 }, { left: 22.4, top: 86.4 }, 
+      { left: 16.7, top: 83.8 }, { left: 10.8, top: 82.8 }, { left: 11.1, top: 70.9 }, { left: 13.2, top: 64.5 }, 
+      { left: 15.5, top: 57.6 }, { left: 16.2, top: 49.8 }, { left: 15.2, top: 42.3 }, { left: 16.6, top: 35.1 }, 
+      { left: 18.2, top: 28.3 }, { left: 20.5, top: 21.5 }
+    ];
+
+    // ----------------------------------------------------
+    // 📚 PHYSICS FORCE QUESTION BANK (4 STAGES x 15 QUESTIONS = 60 QUESTIONS)
+    // ----------------------------------------------------
+    const QUESTION_BANK = {
+      // ด่านที่ 1: การหาแรงลัพธ์ที่มีทิศเดียวกัน (Same direction)
+      same: [
+        { q: "แรง 5 N และ 7 N ไปทางทิศเดียวกัน แรงลัพธ์ = ? N", a: 12 },
+        { q: "แรง 12 N และ 18 N ไปทางทิศเดียวกัน แรงลัพธ์ = ? N", a: 30 },
+        { q: "แรง 8 N และ 15 N ไปทางทิศเดียวกัน แรงลัพธ์ = ? N", a: 23 },
+        { q: "แรง 20 N และ 35 N ไปทางทิศเดียวกัน แรงลัพธ์ = ? N", a: 55 },
+        { q: "แรง 14 N และ 16 N ไปทางทิศเดียวกัน แรงลัพธ์ = ? N", a: 30 },
+        { q: "แรง 25 N และ 40 N ไปทางทิศเดียวกัน แรงลัพธ์ = ? N", a: 65 },
+        { q: "แรง 9 N, 11 N และ 5 N ไปทางทิศเดียวกัน แรงลัพธ์ = ? N", a: 25 },
+        { q: "แรง 15 N และ 22 N ไปทางทิศเดียวกัน แรงลัพธ์ = ? N", a: 37 },
+        { q: "แรง 30 N และ 45 N ไปทางทิศเดียวกัน แรงลัพธ์ = ? N", a: 75 },
+        { q: "แรง 6 N, 8 N และ 10 N ไปทางทิศเดียวกัน แรงลัพธ์ = ? N", a: 24 },
+        { q: "แรง 17 N และ 13 N ไปทางทิศเดียวกัน แรงลัพธ์ = ? N", a: 30 },
+        { q: "แรง 50 N และ 70 N ไปทางทิศเดียวกัน แรงลัพธ์ = ? N", a: 120 },
+        { q: "แรง 3 N, 4 N และ 5 N ไปทางทิศเดียวกัน แรงลัพธ์ = ? N", a: 12 },
+        { q: "แรง 28 N และ 32 N ไปทางทิศเดียวกัน แรงลัพธ์ = ? N", a: 60 },
+        { q: "แรง 100 N และ 150 N ไปทางทิศเดียวกัน แรงลัพธ์ = ? N", a: 250 }
+      ],
+
+      // ด่านที่ 2: การหาแรงลัพธ์ที่มีทิศตรงข้ามกัน (Opposite direction)
+      opposite: [
+        { q: "แรง 15 N ไปทางขวา และ 9 N ไปทางซ้าย แรงลัพธ์ = ? N", a: 6 },
+        { q: "แรง 35 N ไปทางขวา และ 20 N ไปทางซ้าย แรงลัพธ์ = ? N", a: 15 },
+        { q: "แรง 50 N ไปทางเหนือ และ 18 N ไปทางใต้ แรงลัพธ์ = ? N", a: 32 },
+        { q: "แรง 60 N ไปทางตะวันออก และ 45 N ไปทางตะวันตก แรงลัพธ์ = ? N", a: 15 },
+        { q: "แรง 100 N และ 40 N ในทิศตรงข้ามกัน แรงลัพธ์ = ? N", a: 60 },
+        { q: "แรง 28 N ไปทางขวา และ 13 N ไปทางซ้าย แรงลัพธ์ = ? N", a: 15 },
+        { q: "แรง 75 N ไปทางเหนือ และ 30 N ไปทางใต้ แรงลัพธ์ = ? N", a: 45 },
+        { q: "แรง 27 N และ 12 N ในทิศตรงข้ามกัน แรงลัพธ์ = ? N", a: 15 },
+        { q: "แรง 30 N ไปทางขวา ส่วน 10 N และ 5 N ไปทางซ้าย แรงลัพธ์ = ? N", a: 15 },
+        { q: "แรง 80 N และ 25 N ในทิศตรงข้ามกัน แรงลัพธ์ = ? N", a: 55 },
+        { q: "แรง 64 N และ 40 N ในทิศตรงข้ามกัน แรงลัพธ์ = ? N", a: 24 },
+        { q: "แรง 120 N และ 90 N ในทิศตรงข้ามกัน แรงลัพธ์ = ? N", a: 30 },
+        { q: "แรง 33 N และ 18 N ในทิศตรงข้ามกัน แรงลัพธ์ = ? N", a: 15 },
+        { q: "แรง 50 N ไปทางขวา ส่วน 20 N และ 15 N ไปทางซ้าย แรงลัพธ์ = ? N", a: 15 },
+        { q: "แรง 200 N และ 80 N ในทิศตรงข้ามกัน แรงลัพธ์ = ? N", a: 120 }
+      ],
+
+      // ด่านที่ 3: การหาแรงลัพธ์ที่มีทิศตั้งฉากกัน (Perpendicular direction 90°)
+      perpendicular: [
+        { q: "แรง 3 N และ 4 N ทำมุมตั้งฉากกัน (90°) แรงลัพธ์ = ? N", a: 5 },
+        { q: "แรง 6 N และ 8 N ทำมุมตั้งฉากกัน (90°) แรงลัพธ์ = ? N", a: 10 },
+        { q: "แรง 5 N และ 12 N ทำมุมตั้งฉากกัน (90°) แรงลัพธ์ = ? N", a: 13 },
+        { q: "แรง 9 N และ 12 N ทำมุมตั้งฉากกัน (90°) แรงลัพธ์ = ? N", a: 15 },
+        { q: "แรง 8 N และ 15 N ทำมุมตั้งฉากกัน (90°) แรงลัพธ์ = ? N", a: 17 },
+        { q: "แรง 12 N และ 16 N ทำมุมตั้งฉากกัน (90°) แรงลัพธ์ = ? N", a: 20 },
+        { q: "แรง 15 N และ 20 N ทำมุมตั้งฉากกัน (90°) แรงลัพธ์ = ? N", a: 25 },
+        { q: "แรง 7 N และ 24 N ทำมุมตั้งฉากกัน (90°) แรงลัพธ์ = ? N", a: 25 },
+        { q: "แรง 10 N และ 24 N ทำมุมตั้งฉากกัน (90°) แรงลัพธ์ = ? N", a: 26 },
+        { q: "แรง 18 N และ 24 N ทำมุมตั้งฉากกัน (90°) แรงลัพธ์ = ? N", a: 30 },
+        { q: "แรง 20 N และ 21 N ทำมุมตั้งฉากกัน (90°) แรงลัพธ์ = ? N", a: 29 },
+        { q: "แรง 21 N และ 28 N ทำมุมตั้งฉากกัน (90°) แรงลัพธ์ = ? N", a: 35 },
+        { q: "แรง 12 N และ 35 N ทำมุมตั้งฉากกัน (90°) แรงลัพธ์ = ? N", a: 37 },
+        { q: "แรง 9 N และ 40 N ทำมุมตั้งฉากกัน (90°) แรงลัพธ์ = ? N", a: 41 },
+        { q: "แรง 30 N และ 40 N ทำมุมตั้งฉากกัน (90°) แรงลัพธ์ = ? N", a: 50 }
+      ],
+
+      // ด่านที่ 4: การหาแรงลัพธ์ที่มีทิศทำมุมกัน (Angled direction)
+      angled: [
+        { q: "แรง 3 N และ 5 N ทำมุม 60° กัน (cos 60°=0.5) แรงลัพธ์ = ? N", a: 7 },
+        { q: "แรง 7 N และ 8 N ทำมุม 60° กัน (cos 60°=0.5) แรงลัพธ์ = ? N", a: 13 },
+        { q: "แรง 6 N และ 10 N ทำมุม 60° กัน (cos 60°=0.5) แรงลัพธ์ = ? N", a: 14 },
+        { q: "แรง 10 N และ 10 N ทำมุม 120° กัน (cos 120°=-0.5) แรงลัพธ์ = ? N", a: 10 },
+        { q: "แรง 15 N และ 15 N ทำมุม 120° กัน (cos 120°=-0.5) แรงลัพธ์ = ? N", a: 15 },
+        { q: "แรง 3 N และ 8 N ทำมุม 120° กัน (cos 120°=-0.5) แรงลัพธ์ = ? N", a: 7 },
+        { q: "แรง 5 N และ 8 N ทำมุม 120° กัน (cos 120°=-0.5) แรงลัพธ์ = ? N", a: 7 },
+        { q: "แรง 7 N และ 15 N ทำมุม 53° กัน (cos 53°=0.6) แรงลัพธ์ = ? N", a: 20 },
+        { q: "แรง 9 N และ 10 N ทำมุม 53° กัน (cos 53°=0.6) แรงลัพธ์ = ? N", a: 17 },
+        { q: "แรง 18 N และ 20 N ทำมุม 53° กัน (cos 53°=0.6) แรงลัพธ์ = ? N", a: 34 },
+        { q: "แรง 19 N และ 20 N ทำมุม 37° กัน (cos 37°=0.8) แรงลัพธ์ = ? N", a: 37 },
+        { q: "แรง 16 N และ 25 N ทำมุม 37° กัน (cos 37°=0.8) แรงลัพธ์ = ? N", a: 39 },
+        { q: "แรง 12 N และ 20 N ทำมุม 60° กัน (cos 60°=0.5) แรงลัพธ์ = ? N", a: 28 },
+        { q: "แรง 20 N และ 20 N ทำมุม 120° กัน (cos 120°=-0.5) แรงลัพธ์ = ? N", a: 20 },
+        { q: "แรง 6 N และ 25 N ทำมุม 53° กัน (cos 53°=0.6) แรงลัพธ์ = ? N", a: 29 }
+      ]
+    };
+
+    // Local Variables
+    let currentRoomCode = null;
+    let myRole = 0; // 0 = P1, 1 = P2, 'spectator' = Viewer
+    let roomRef = null;
+    let roomData = null;
+    let isSpectatorMode = false;
+
+    let p1SelectedRobotIndex = 0;
+    let p2SelectedRobotIndex = 1;
+
+    let timerInterval = null;
+    let timeRemaining = QUESTION_TIME_LIMIT;
+    let currentRotX = -22;
+    let currentRotY = -35;
+    let isFromMainMenuShop = false;
+
+    const FIREWORKS_SVG = `<svg class="firework-svg" viewBox="0 0 100 100"><g class="firework-spark"><circle cx="50" cy="10" r="3.5" fill="#f59e0b" /><circle cx="85" cy="25" r="3" fill="#10b981" /><circle cx="90" cy="50" r="3.5" fill="#06b6d4" /><circle cx="80" cy="80" r="4" fill="#3b82f6" /><circle cx="50" cy="90" r="3.5" fill="#ec4899" /><circle cx="20" cy="80" r="3" fill="#8b5cf6" /><circle cx="10" cy="50" r="3.5" fill="#f97316" /><circle cx="20" cy="20" r="4" fill="#facc15" /><line x1="50" y1="50" x2="50" y2="18" stroke="#f59e0b" stroke-width="2" stroke-dasharray="2" /><line x1="50" y1="50" x2="78" y2="28" stroke="#10b981" stroke-width="2" stroke-dasharray="2" /><line x1="50" y1="50" x2="82" y2="50" stroke="#06b6d4" stroke-width="2" stroke-dasharray="2" /><line x1="50" y1="50" x2="72" y2="72" stroke="#3b82f6" stroke-width="2" stroke-dasharray="2" /><line x1="50" y1="50" x2="50" y2="82" stroke="#ec4899" stroke-width="2" stroke-dasharray="2" /><line x1="50" y1="50" x2="28" y2="72" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="2" /><line x1="50" y1="50" x2="18" y2="50" stroke="#f97316" stroke-width="2" stroke-dasharray="2" /><line x1="50" y1="50" x2="28" y2="28" stroke="#facc15" stroke-width="2" stroke-dasharray="2" /></g><polygon class="firework-star" points="50,38 53,46 62,47 55,53 57,62 50,57 43,62 45,53 38,47 47,46" fill="#ffffff" /></svg>`;
+    const EXPLOSION_SVG = `<svg class="explosion-svg" viewBox="0 0 100 100"><circle class="exp-shockwave" cx="50" cy="50" r="35" fill="none" stroke="#ef4444" /><g class="exp-blast"><polygon class="exp-flame" points="50,10 62,35 90,25 72,50 88,78 58,68 50,92 38,68 12,80 26,50 10,25 38,35" fill="#f97316" /><polygon class="exp-flame" points="50,22 58,40 74,68 55,60 50,78 42,60 24,68 34,50 22,32 40,40" fill="#facc15" style="animation-delay: 0.2s;" /><circle cx="50" cy="50" r="14" fill="#ffffff" /></g></svg>`;
+
+    function getRealm(tileNum) {
+      if (tileNum <= 12) return { name: 'แรงทิศเดียวกัน', type: 'same', icon: '➡️➡️', title: '⚔️ เข้าสู่ด่านแรงทิศเดียวกัน', desc: 'ยินดีต้อนรับสู่ดินแดนแรงลัพธ์ทิศเดียวกัน! คำนวณแรงลัพธ์เพื่อรุดหน้าต่อไป' };
+      if (tileNum <= 22) return { name: 'แรงทิศตรงข้าม', type: 'opposite', icon: '➡️⬅️', title: '⚔️ เข้าสู่ด่านแรงทิศตรงข้าม', desc: 'เข้าสู่ดินแดนแรงลัพธ์ทิศตรงข้ามกัน! หักล้างแรงแล้วหาผลลัพธ์' };
+      if (tileNum <= 34) return { name: 'แรงตั้งฉากกัน', type: 'perpendicular', icon: '⬆️➡️', title: '⚔️ เข้าสู่ด่านแรงตั้งฉาก', desc: 'เข้าสู่ดินแดนแรงลัพธ์ตั้งฉากกัน! ใช้ทฤษฎีบทพีทาโกรัสหาแรงลัพธ์' };
+      return { name: 'แรงทำมุมกัน', type: 'angled', icon: '↗️↘️', title: '⚔️ เข้าสู่ด่านแรงทำมุม', desc: 'เข้าสู่ดินแดนแรงลัพธ์ทำมุมกัน! คำนวณแรงลัพธ์ด่านสุดท้ายพิชิต Zero Castle' };
+    }
+
+    function switchView(viewId) {
+      document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+      document.getElementById(viewId).classList.remove('hidden');
+    }
+
+    function showMenu() { 
+      document.getElementById('victory-modal').classList.add('hidden');
+      if (roomRef) roomRef.off(); 
+      switchView('view-menu'); 
+    }
+
+    function showHOF() { loadHOFData(); switchView('view-hof'); }
+
+    // ----------------------------------------------------
+    // 3. ONLINE ROOM & MULTIPLAYER SYSTEM
+    // ----------------------------------------------------
+    function createNewRoom() {
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      currentRoomCode = code;
+      myRole = 0; // Host = P1
+      isSpectatorMode = false;
+      hasLoggedThisGame = false;
+
+      const r1 = ROBOT_PRESETS[p1SelectedRobotIndex];
+      const r2 = ROBOT_PRESETS[p2SelectedRobotIndex];
+
+      const initialRoom = {
+        status: 'lobby',
+        currentTurn: 0,
+        phase: 'idle',
+        multiplier: 1,
+        players: {
+          0: { id: 0, name: 'เด็กเวกเตอร์สายพุ่ง', robotName: r1.name, image: r1.image, title: r1.title, pos: 1, crystals: 50, inventory: { shield: 0, timeExtender: 0, doubleCrystal: 0, warpBoost: 0 }, activeBuffs: { timeExtender: false, doubleCrystal: false }, connected: true },
+          1: { id: 1, name: 'น้องมวลสารสายบวก', robotName: r2.name, image: r2.image, title: r2.title, pos: 1, crystals: 50, inventory: { shield: 0, timeExtender: 0, doubleCrystal: 0, warpBoost: 0 }, activeBuffs: { timeExtender: false, doubleCrystal: false }, connected: false }
+        }
+      };
+
+      db.ref('rooms/' + code).set(initialRoom).then(() => {
+        listenToRoom(code);
+        renderRobotGrids();
+        switchView('view-char-select');
+      });
+    }
+
+    function showRoomJoinModal(spectateMode = false) {
+      isSpectatorMode = spectateMode;
+      document.getElementById('room-modal-title').innerText = spectateMode ? '👁️ เข้าชมการแข่งขัน (Spectator)' : '🌐 เข้าร่วมห้องเล่นเกม';
+      document.getElementById('join-room-code-input').value = '';
+      document.getElementById('room-input-modal').classList.remove('hidden');
+    }
+
+    function closeRoomInputModal() {
+      document.getElementById('room-input-modal').classList.add('hidden');
+    }
+
+    function confirmJoinRoom() {
+      const code = document.getElementById('join-room-code-input').value.trim().toUpperCase();
+      if (!code) return alert('กรุณากรอกรหัสห้อง!');
+
+      db.ref('rooms/' + code).once('value').then(snap => {
+        if (!snap.exists()) return alert('ไม่พบรหัสห้องนี้!');
+        
+        currentRoomCode = code;
+        closeRoomInputModal();
+
+        if (isSpectatorMode) {
+          myRole = 'spectator';
+          listenToRoom(code);
+        } else {
+          myRole = 1; // P2
+          hasLoggedThisGame = false;
+          db.ref(`rooms/${code}/players/1`).update({ connected: true }).then(() => {
+            listenToRoom(code);
+            renderRobotGrids();
+            switchView('view-char-select');
+          });
+        }
+      });
+    }
+
+    function listenToRoom(code) {
+      roomRef = db.ref('rooms/' + code);
+      roomRef.on('value', snap => {
+        roomData = snap.val();
+        if (!roomData) return;
+
+        updateLobbyUI();
+        updateGameUI();
+
+        if (roomData.status === 'playing' && document.getElementById('view-game').classList.contains('hidden')) {
+          initBoardUI();
+          switchView('view-game');
+        } else if (roomData.status === 'finished') {
+          showVictoryModal();
+        }
+      });
+    }
+
+    function renderRobotGrids() {
+      ['p1', 'p2'].forEach((prefix, pIdx) => {
+        const grid = document.getElementById(`${prefix}-robot-grid`);
+        grid.innerHTML = '';
+        ROBOT_PRESETS.forEach((robot, rIdx) => {
+          const isSel = (pIdx === 0 ? p1SelectedRobotIndex : p2SelectedRobotIndex) === rIdx;
+          const card = document.createElement('div');
+          card.className = `robot-card ${isSel ? 'selected' : ''}`;
+          card.onclick = () => selectRobot(pIdx, rIdx);
+          card.innerHTML = `
+            <div class="robot-icon"><img src="${robot.image}" alt="${robot.name}"></div>
+            <span class="robot-name">${robot.name}</span>
+            <span class="robot-desc">${robot.desc}</span>
+          `;
+          grid.appendChild(card);
+        });
+      });
+    }
+
+    function selectRobot(pIdx, rIdx) {
+      if (myRole !== pIdx && myRole !== 'spectator') return;
+      if (pIdx === 0) p1SelectedRobotIndex = rIdx;
+      else p2SelectedRobotIndex = rIdx;
+
+      renderRobotGrids();
+
+      if (currentRoomCode && myRole === pIdx) {
+        const r = ROBOT_PRESETS[rIdx];
+        db.ref(`rooms/${currentRoomCode}/players/${pIdx}`).update({
+          robotName: r.name,
+          image: r.image,
+          title: r.title
+        });
+      }
+    }
+
+    function updatePlayerLobbyInfo() {
+      if (!currentRoomCode || myRole === 'spectator') return;
+      const name = document.getElementById(myRole === 0 ? 'p1-name-input' : 'p2-name-input').value.trim();
+      if (name) {
+        db.ref(`rooms/${currentRoomCode}/players/${myRole}`).update({ name });
+      }
+    }
+
+    function updateLobbyUI() {
+      if (!roomData) return;
+      document.getElementById('room-code-display').innerText = `ROOM: ${currentRoomCode}`;
+      document.getElementById('my-role-tag').innerText = myRole === 'spectator' ? 'คุณคือ: ผู้ชม (Spectator)' : `คุณคือ: ผู้เล่น ${myRole + 1}`;
+
+      if (roomData.players[0]) {
+        document.getElementById('p1-name-input').value = roomData.players[0].name;
+      }
+      if (roomData.players[1]) {
+        document.getElementById('p2-name-input').value = roomData.players[1].name;
+      }
+
+      const startBtn = document.getElementById('btn-start-game');
+      if (myRole === 0) {
+        startBtn.disabled = !roomData.players[1].connected;
+        startBtn.innerText = roomData.players[1].connected ? '🚀 พร้อมลุย! เริ่มการแข่งขัน' : '⏳ รอผู้เล่นคนที่สองเข้าห้อง...';
+      } else {
+        startBtn.disabled = true;
+        startBtn.innerText = '⏳ รอยูสเซอร์หลัก (Host P1) กดเริ่มเกม...';
+      }
+    }
+
+    function confirmStartGame() {
+      if (myRole !== 0 || !roomData) return;
+      db.ref(`rooms/${currentRoomCode}`).update({ status: 'playing', phase: 'idle' });
+    }
+
+    // ----------------------------------------------------
+    // 4. BOARD & GAME CONTROLS
+    // ----------------------------------------------------
+    function initBoardUI() {
+      const grid = document.getElementById('board-grid');
+      grid.innerHTML = '';
+
+      tilePositions.forEach((pos, idx) => {
+        const tileNum = idx + 1;
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        if (SPECIAL_TILES.includes(tileNum)) tile.classList.add('special-tile');
+        if (CHALLENGE_TILES.includes(tileNum)) tile.classList.add('challenge-tile');
+
+        tile.style.left = pos.left + '%';
+        tile.style.top = pos.top + '%';
+        tile.innerHTML = `<span class="tile-num">${tileNum}</span>`;
+        tile.id = `tile-${tileNum}`;
+        grid.appendChild(tile);
+      });
+      updateBoardTokens();
+    }
+
+    function updateBoardTokens() {
+      if (!roomData) return;
+      document.querySelectorAll('.tokens').forEach(el => el.remove());
+
+      [0, 1].forEach(pIdx => {
+        const p = roomData.players[pIdx];
+        const tileEl = document.getElementById(`tile-${p.pos}`);
+        if (tileEl) {
+          let tokensContainer = tileEl.querySelector('.tokens');
+          if (!tokensContainer) {
+            tokensContainer = document.createElement('div');
+            tokensContainer.className = 'tokens';
+            tileEl.appendChild(tokensContainer);
+          }
+          const badge = document.createElement('div');
+          badge.className = `token-badge p${pIdx + 1}-token`;
+          badge.innerHTML = `<img src="${p.image}" alt="${p.name}">`;
+          tokensContainer.appendChild(badge);
+        }
+      });
+    }
+
+    function updateGameUI() {
+      if (!roomData || roomData.status !== 'playing') return;
+
+      document.getElementById('game-room-code').innerText = `ROOM: ${currentRoomCode}`;
+      const p1 = roomData.players[0];
+      const p2 = roomData.players[1];
+
+      document.getElementById('p1-card-name').innerText = p1.name;
+      document.getElementById('p1-card-title').innerText = p1.title;
+      document.getElementById('p1-crystal').innerText = p1.crystals;
+      document.getElementById('p1-card-icon').innerHTML = `<img src="${p1.image}">`;
+
+      document.getElementById('p2-card-name').innerText = p2.name;
+      document.getElementById('p2-card-title').innerText = p2.title;
+      document.getElementById('p2-crystal').innerText = p2.crystals;
+      document.getElementById('p2-card-icon').innerHTML = `<img src="${p2.image}">`;
+
+      document.getElementById('p1-card').classList.toggle('active', roomData.currentTurn === 0);
+      document.getElementById('p2-card').classList.toggle('active', roomData.currentTurn === 1);
+
+      document.getElementById('turn-display').innerText = `ตาของ: ${roomData.players[roomData.currentTurn].name}`;
+
+      renderInventory('p1-inventory', 0);
+      renderInventory('p2-inventory', 1);
+
+      const rollBtn = document.getElementById('btn-roll');
+      rollBtn.disabled = (myRole !== roomData.currentTurn) || roomData.phase !== 'idle';
+
+      updateBoardTokens();
+      syncModalState();
+    }
+
+    function renderInventory(elementId, pIdx) {
+      const container = document.getElementById(elementId);
+      container.innerHTML = '';
+      const p = roomData.players[pIdx];
+      const isMyTurn = (roomData.currentTurn === pIdx) && (myRole === pIdx) && (roomData.phase === 'idle');
+
+      if (p.inventory.shield > 0) {
+        container.innerHTML += `<span class="inv-item-btn">🛡️ x${p.inventory.shield}</span>`;
+      }
+      if (p.inventory.timeExtender > 0 || p.activeBuffs.timeExtender) {
+        container.innerHTML += `<span class="inv-item-btn ${p.activeBuffs.timeExtender ? 'active-buff' : ''}">⏱️ +5s</span>`;
+      }
+      if (p.inventory.doubleCrystal > 0 || p.activeBuffs.doubleCrystal) {
+        container.innerHTML += `<span class="inv-item-btn ${p.activeBuffs.doubleCrystal ? 'active-buff' : ''}">✨ x2</span>`;
+      }
+      if (p.inventory.warpBoost > 0) {
+        container.innerHTML += `<button class="inv-item-btn" onclick="triggerUseWarpBoost()" ${!isMyTurn ? 'disabled' : ''}>🚀 บูสต์ (+3)</button>`;
+      }
+    }
+
+    // ----------------------------------------------------
+    // 🎲 DICE ROLL & MOVEMENT LOGIC
+    // ----------------------------------------------------
+    function triggerRollDice() {
+      if (myRole !== roomData.currentTurn || roomData.phase !== 'idle') return;
+
+      const diceRoll = Math.floor(Math.random() * 6) + 1;
+      db.ref(`rooms/${currentRoomCode}`).update({
+        phase: 'rolling',
+        lastRoll: diceRoll
+      });
+
+      animateDice(diceRoll);
+    }
+
+    function animateDice(rollValue) {
+      soundEngine.playDiceRoll();
+      const cube = document.getElementById('cube');
+      const shadow = document.getElementById('dice-shadow');
+
+      shadow.classList.add('rolling-shadow');
+
+      const rotations = {
+        1: { x: 0, y: 0 },
+        6: { x: 0, y: 180 },
+        3: { x: 0, y: -90 },
+        4: { x: 0, y: 90 },
+        2: { x: -90, y: 0 },
+        5: { x: 90, y: 0 }
+      };
+
+      currentRotX += 720 + rotations[rollValue].x;
+      currentRotY += 720 + rotations[rollValue].y;
+
+      cube.style.transform = `rotateX(${currentRotX}deg) rotateY(${currentRotY}deg)`;
+
+      setTimeout(() => {
+        shadow.classList.remove('rolling-shadow');
+        if (myRole === roomData.currentTurn) {
+          processMove(rollValue);
+        }
+      }, 2300);
+    }
+
+    function processMove(steps) {
+      const pIdx = roomData.currentTurn;
+      const oldPos = roomData.players[pIdx].pos;
+      const newPos = Math.min(TOTAL_TILES, oldPos + steps);
+
+      const oldRealm = getRealm(oldPos);
+      const newRealm = getRealm(newPos);
+
+      db.ref(`rooms/${currentRoomCode}/players/${pIdx}`).update({ pos: newPos }).then(() => {
+        if (newPos >= TOTAL_TILES) {
+          db.ref(`rooms/${currentRoomCode}`).update({ status: 'finished', winner: pIdx });
+          return;
+        }
+
+        // เช็คการเปลี่ยนด่าน
+        if (oldRealm.type !== newRealm.type) {
+          db.ref(`rooms/${currentRoomCode}`).update({
+            phase: 'realm_announce',
+            targetRealm: newRealm.type
+          });
+        } else {
+          openQuestionPhase(newPos);
+        }
+      });
+    }
+
+    function confirmRealmAnnouncement() {
+      document.getElementById('realm-announce-modal').classList.add('hidden');
+      if (myRole === roomData.currentTurn) {
+        openQuestionPhase(roomData.players[roomData.currentTurn].pos);
+      }
+    }
+
+    function triggerUseWarpBoost() {
+      if (myRole !== roomData.currentTurn || roomData.phase !== 'idle') return;
+      const pIdx = myRole;
+      const p = roomData.players[pIdx];
+
+      if (p.inventory.warpBoost > 0) {
+        soundEngine.playWarp();
+        db.ref(`rooms/${currentRoomCode}/players/${pIdx}`).update({
+          'inventory/warpBoost': p.inventory.warpBoost - 1
+        });
+        processMove(3);
+      }
+    }
+
+    // ----------------------------------------------------
+    // 🎯 QUESTION & MODAL SYNCHRONIZATION
+    // ----------------------------------------------------
+    function generateQuestion(realmType) {
+      const list = QUESTION_BANK[realmType] || QUESTION_BANK.same;
+      const randomIndex = Math.floor(Math.random() * list.length);
+      return list[randomIndex];
+    }
+
+    function openQuestionPhase(pos) {
+      const realm = getRealm(pos);
+      const isChallenge = CHALLENGE_TILES.includes(pos);
+      const isSpecial = SPECIAL_TILES.includes(pos);
+
+      if (isChallenge) {
+        db.ref(`rooms/${currentRoomCode}`).update({ phase: 'choice_modal', currentPos: pos });
+      } else {
+        const qObj = generateQuestion(realm.type);
+        db.ref(`rooms/${currentRoomCode}`).update({
+          phase: 'question_modal',
+          currentQuestion: qObj,
+          multiplier: isSpecial ? 2 : 1,
+          currentPos: pos
+        });
+      }
+    }
+
+    function triggerSelectChallenge(type) {
+      if (myRole !== roomData.currentTurn) return;
+      let mult = 1;
+      if (type === 'hard') mult = 2;
+      if (type === 'duel') mult = 3;
+
+      const pos = roomData.players[roomData.currentTurn].pos;
+      const realm = getRealm(pos);
+      const qObj = generateQuestion(realm.type);
+
+      db.ref(`rooms/${currentRoomCode}`).update({
+        phase: 'question_modal',
+        currentQuestion: qObj,
+        multiplier: mult,
+        currentPos: pos
+      });
+    }
+
+    function syncModalState() {
+      const modal = document.getElementById('question-modal');
+      const choiceView = document.getElementById('modal-choice-view');
+      const questionView = document.getElementById('modal-question-view');
+      const resultView = document.getElementById('modal-result-view');
+      const announceModal = document.getElementById('realm-announce-modal');
+
+      if (roomData.phase === 'realm_announce') {
+        const realm = getRealm(roomData.players[roomData.currentTurn].pos);
+        document.getElementById('realm-announce-icon').innerText = realm.icon;
+        document.getElementById('realm-announce-title').innerText = realm.title;
+        document.getElementById('realm-announce-desc').innerText = realm.desc;
+        announceModal.classList.remove('hidden');
+        return;
+      } else {
+        announceModal.classList.add('hidden');
+      }
+
+      if (roomData.phase === 'choice_modal') {
+        modal.classList.remove('hidden');
+        choiceView.classList.remove('hidden');
+        questionView.classList.add('hidden');
+        resultView.classList.add('hidden');
+
+        const isMyTurn = (myRole === roomData.currentTurn);
+        document.getElementById('choice-easy-btn').disabled = !isMyTurn;
+        document.getElementById('choice-hard-btn').disabled = !isMyTurn;
+        document.getElementById('choice-duel-btn').disabled = !isMyTurn;
+
+      } else if (roomData.phase === 'question_modal') {
+        modal.classList.remove('hidden');
+        choiceView.classList.add('hidden');
+        questionView.classList.remove('hidden');
+        resultView.classList.add('hidden');
+
+        const q = roomData.currentQuestion;
+        const realm = getRealm(roomData.currentPos);
+
+        document.getElementById('modal-realm-tag').innerText = `${realm.icon} ${realm.name}`;
+        document.getElementById('modal-bonus-badge').classList.toggle('hidden', roomData.multiplier <= 1);
+        document.getElementById('q-text').innerText = q.q;
+
+        const isMyTurn = (myRole === roomData.currentTurn);
+        const submitBtn = document.getElementById('btn-submit-ans');
+        submitBtn.disabled = !isMyTurn;
+
+        if (isMyTurn && !timerInterval) {
+          startQuestionTimer();
+        }
+
+      } else if (roomData.phase === 'result_modal') {
+        modal.classList.remove('hidden');
+        choiceView.classList.add('hidden');
+        questionView.classList.add('hidden');
+        resultView.classList.remove('hidden');
+
+        clearInterval(timerInterval);
+        timerInterval = null;
+
+        const res = roomData.lastResult;
+        const card = document.getElementById('modal-card');
+        card.className = `modal-card ${res.isCorrect ? 'correct-mode' : 'incorrect-mode'}`;
+
+        document.getElementById('result-animation-box').innerHTML = res.isCorrect ? FIREWORKS_SVG : EXPLOSION_SVG;
+        document.getElementById('result-title').innerText = res.isCorrect ? 'ถูกต้องแม่นยำ!' : 'พลังงานล้มเหลว!';
+        document.getElementById('user-ans-display').innerText = res.userAns;
+        document.getElementById('correct-ans-display').innerText = res.correctAns;
+        document.getElementById('result-reward').innerText = res.isCorrect ? `+${res.reward} Crystal 💎` : `เสีย 0 Crystal (เกราะป้องกัน)`;
+
+        const nextBtn = document.getElementById('btn-next-turn');
+        nextBtn.disabled = (myRole !== roomData.currentTurn);
+
+      } else {
+        modal.classList.add('hidden');
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    // ----------------------------------------------------
+    // ⏱️ TIMER & ANSWER HANDLING
+    // ----------------------------------------------------
+	
+	// 1. เพิ่มฟังก์ชันช่วยคำนวณเวลาตามด่าน (Realm)
+function getQuestionTimeLimit(pos) {
+  const realm = getRealm(pos);
+  // ด่าน 3 (perpendicular) และ ด่าน 4 (angled) เพิ่มเวลาเป็น 30 วินาที
+  if (realm.type === 'perpendicular' || realm.type === 'angled') {
+    return 90; // กำหนดเวลาด่าน 3 และ 4 (ปรับตัวเลขได้ตามต้องการ)
+  }
+  return QUESTION_TIME_LIMIT; // ด่าน 1 และ 2 ใช้เวลาเดิม (15 วินาที)
+}
+
+
+    // 2. ปรับปรุงฟังก์ชัน startQuestionTimer
+function startQuestionTimer() {
+  const pIdx = roomData.currentTurn;
+  const p = roomData.players[pIdx];
+
+  // ดึงเวลาเริ่มต้นตามตำแหน่งด่านปัจจุบัน
+  const baseTime = getQuestionTimeLimit(roomData.currentPos || p.pos);
+
+  timeRemaining = baseTime + (p.activeBuffs.timeExtender ? 5 : 0);
+  updateTimerUI(baseTime);
+
+  timerInterval = setInterval(() => {
+    timeRemaining--;
+    updateTimerUI(baseTime);
+
+    if (timeRemaining <= 5 && timeRemaining > 0) {
+      soundEngine.playTimerUrgent();
+    } else if (timeRemaining > 5) {
+      soundEngine.playTimerTick();
+    }
+
+    if (timeRemaining <= 0) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      if (myRole === roomData.currentTurn) {
+        triggerSubmitAnswer(true);
+      }
+    }
+  }, 1000);
+}
+
+    // 3. ปรับปรุงฟังก์ชัน updateTimerUI รับค่า baseTime เพื่อคำนวณหลอดเวลา (% Progress Bar)
+function updateTimerUI(baseTime = QUESTION_TIME_LIMIT) {
+  const countEl = document.getElementById('timer-count');
+  const barEl = document.getElementById('timer-bar');
+  const timerBox = document.getElementById('timer-box');
+
+  countEl.innerText = timeRemaining;
+  
+  // คำนวณความยาวหลอดเวลาอิงจากเวลาเต็มของด่านนั้นๆ
+  const pIdx = roomData ? roomData.currentTurn : 0;
+  const p = roomData ? roomData.players[pIdx] : null;
+  const maxTime = baseTime + (p && p.activeBuffs && p.activeBuffs.timeExtender ? 5 : 0);
+  
+  const pct = Math.max(0, (timeRemaining / maxTime) * 100);
+  barEl.style.width = `${pct}%`;
+
+  timerBox.classList.toggle('urgent', timeRemaining <= 5);
+}
+
+    function toggleNegativeSign() {
+      const input = document.getElementById('q-answer');
+      if (input.value.startsWith('-')) {
+        input.value = input.value.substring(1);
+      } else {
+        input.value = '-' + input.value;
+      }
+    }
+
+    function triggerSubmitAnswer(isTimeout = false) {
+      if (myRole !== roomData.currentTurn) return;
+      
+      const pIdx = roomData.currentTurn;
+      const p = roomData.players[pIdx];
+      const q = roomData.currentQuestion;
+
+      const userAnsText = document.getElementById('q-answer').value.trim();
+      const userAnsNum = isTimeout ? null : parseFloat(userAnsText);
+      const isCorrect = !isTimeout && (userAnsNum === q.a);
+
+      let reward = 0;
+      if (isCorrect) {
+        soundEngine.playCorrect();
+        reward = BASE_CRYSTAL_REWARD * roomData.multiplier * (p.activeBuffs.doubleCrystal ? 2 : 1);
+      } else {
+        soundEngine.playIncorrect();
+      }
+
+      // หักใช้งานบัฟชั่วคราว
+      const updatedCrystals = Math.max(0, p.crystals + reward);
+      const newBuffs = { timeExtender: false, doubleCrystal: false };
+
+      db.ref(`rooms/${currentRoomCode}/players/${pIdx}`).update({
+        crystals: updatedCrystals,
+        activeBuffs: newBuffs
+      });
+
+      db.ref(`rooms/${currentRoomCode}`).update({
+        phase: 'result_modal',
+        lastResult: {
+          isCorrect,
+          userAns: isTimeout ? 'หมดเวลา' : userAnsText,
+          correctAns: q.a,
+          reward
+        }
+      });
+
+      document.getElementById('q-answer').value = '';
+    }
+
+    function triggerNextTurn() {
+      if (myRole !== roomData.currentTurn) return;
+      const nextTurn = (roomData.currentTurn === 0) ? 1 : 0;
+      db.ref(`rooms/${currentRoomCode}`).update({
+        currentTurn: nextTurn,
+        phase: 'idle'
+      });
+    }
+
+    // ----------------------------------------------------
+    // 🛒 SHOP SYSTEM
+    // ----------------------------------------------------
+    function openShopModal(fromMenu = false) {
+      isFromMainMenuShop = fromMenu;
+      const shopModal = document.getElementById('shop-modal');
+      const grid = document.getElementById('shop-items-grid');
+      grid.innerHTML = '';
+
+      let targetPlayer = null;
+      if (!fromMenu && roomData && myRole !== 'spectator') {
+        targetPlayer = roomData.players[myRole];
+      }
+
+      document.getElementById('shop-player-name').innerText = targetPlayer ? targetPlayer.name : 'ผู้เยี่ยมชม';
+      document.getElementById('shop-player-crystals').innerText = targetPlayer ? targetPlayer.crystals : 0;
+
+      SHOP_ITEMS.forEach(item => {
+        const itemCard = document.createElement('div');
+        itemCard.className = 'shop-item-card';
+        itemCard.innerHTML = `
+          <div class="shop-item-info">
+            <strong>${item.name}</strong>
+            <p>${item.desc}</p>
+          </div>
+          <div class="shop-item-buy">
+            <span class="shop-price">${item.price} 💎</span>
+            <button class="btn-buy" onclick="buyShopItem('${item.id}', ${item.price})" ${(!targetPlayer || targetPlayer.crystals < item.price) ? 'disabled' : ''}>ซื้อไอเทม</button>
+          </div>
+        `;
+        grid.appendChild(itemCard);
+      });
+
+      shopModal.classList.remove('hidden');
+    }
+
+    function closeShopModal() {
+      document.getElementById('shop-modal').classList.add('hidden');
+    }
+
+    function buyShopItem(itemId, price) {
+      if (isFromMainMenuShop || !roomData || myRole === 'spectator') return;
+
+      const pIdx = myRole;
+      const p = roomData.players[pIdx];
+
+      if (p.crystals >= price) {
+        soundEngine.playShopBuy();
+        const newCrystals = p.crystals - price;
+        const newInventory = { ...p.inventory };
+        newInventory[itemId] = (newInventory[itemId] || 0) + 1;
+
+        const newBuffs = { ...p.activeBuffs };
+        if (itemId === 'timeExtender') newBuffs.timeExtender = true;
+        if (itemId === 'doubleCrystal') newBuffs.doubleCrystal = true;
+
+        db.ref(`rooms/${currentRoomCode}/players/${pIdx}`).update({
+          crystals: newCrystals,
+          inventory: newInventory,
+          activeBuffs: newBuffs
+        });
+
+        openShopModal(false);
+      }
+    }
+
+    // ----------------------------------------------------
+    // 🏆 VICTORY & GOOGLE SHEETS INTEGRATION
+    // ----------------------------------------------------
+    function showVictoryModal() {
+      if (!roomData) return;
+      soundEngine.playVictory();
+
+      const winnerIdx = roomData.winner;
+      const winner = roomData.players[winnerIdx];
+
+      document.getElementById('winner-name-display').innerText = winner.name;
+      document.getElementById('winner-stats-display').innerText = `สะสม Crystal ทั้งหมด: ${winner.crystals} 💎`;
+      document.getElementById('winner-icon-display').innerHTML = `<img src="${winner.image}" style="width:80px; height:80px;">`;
+
+      document.getElementById('victory-modal').classList.remove('hidden');
+
+      if (!hasLoggedThisGame && myRole === 0) {
+        hasLoggedThisGame = true;
+        saveToGoogleSheets(winner.name, winner.robotName, winner.crystals);
+      }
+    }
+
+    function closeVictoryAndShowHOF() {
+      document.getElementById('victory-modal').classList.add('hidden');
+      showHOF();
+    }
+
+    function saveToGoogleSheets(name, robot, score) {
+      if (!GOOGLE_SHEETS_WEB_APP_URL) return;
+
+      const payload = { name, robot, score };
+      fetch(GOOGLE_SHEETS_WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(err => console.error("Sheet error:", err));
+    }
+
+    function loadHOFData() {
+      if (!GOOGLE_SHEETS_WEB_APP_URL) return;
+
+      fetch(GOOGLE_SHEETS_WEB_APP_URL)
+        .then(res => res.json())
+        .then(data => {
+          const list = document.getElementById('hof-list');
+          list.innerHTML = '';
+
+          data.sort((a, b) => b.score - a.score);
+
+          if (data[0]) {
+            document.getElementById('hof-name-1').innerText = data[0].name;
+            document.getElementById('hof-score-1').innerText = `${data[0].score} 💎`;
+          }
+          if (data[1]) {
+            document.getElementById('hof-name-2').innerText = data[1].name;
+            document.getElementById('hof-score-2').innerText = `${data[1].score} 💎`;
+          }
+          if (data[2]) {
+            document.getElementById('hof-name-3').innerText = data[2].name;
+            document.getElementById('hof-score-3').innerText = `${data[2].score} 💎`;
+          }
+
+          data.forEach((row, idx) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${idx + 1}</td>
+              <td>${row.name}</td>
+              <td>${row.robot || '-'}</td>
+              <td style="color:var(--accent-gold); font-weight:bold;">${row.score} 💎</td>
+            `;
+            list.appendChild(tr);
+          });
+        })
+        .catch(err => console.error("HOF error:", err));
+    }
+
+    // Enter key event listener for submitting answer
+    document.getElementById('q-answer').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        triggerSubmitAnswer();
+      }
+    });
+
+  </script>
+</body>
+</html>
