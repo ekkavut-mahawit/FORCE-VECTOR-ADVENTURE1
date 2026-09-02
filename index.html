@@ -1806,34 +1806,60 @@ function updateTimerUI(baseTime = QUESTION_TIME_LIMIT) {
       showHOF();
     }
 
-    function saveToGoogleSheets(name, robot, score) {
-
+   function saveToGoogleSheets() {
   if (!GOOGLE_SHEETS_WEB_APP_URL) {
     console.error("❌ ไม่พบ GOOGLE_SHEETS_WEB_APP_URL");
     return;
   }
 
+  if (!roomData || !roomData.players || roomData.players.length < 2) {
+    console.error("❌ ไม่มีข้อมูลผู้เล่นครบ 2 คน");
+    return;
+  }
+
+  const p1 = roomData.players[0];
+  const p2 = roomData.players[1];
+
+  const winnerIdx = roomData.winner;
+  const winner = roomData.players[winnerIdx];
+
   const payload = {
-    name: String(name || ''),
-    robot: String(robot || ''),
-    score: Number(score) || 0
+    timestamp: new Date().toISOString(),
+
+    // รหัสห้อง
+    roomCode: roomData.roomCode || "",
+
+    // ผู้ชนะ
+    winnerName: winner ? winner.name : "",
+
+    // P1
+    p1Name: p1.name || "",
+    p1Robot: p1.robotName || "",
+    p1Crystals: Number(p1.crystals) || 0,
+    p1Pos: p1.position || "",
+
+    // P2
+    p2Name: p2.name || "",
+    p2Robot: p2.robotName || "",
+    p2Crystals: Number(p2.crystals) || 0,
+    p2Pos: p2.position || ""
   };
 
-  console.log("📤 กำลังส่งข้อมูลไป Google Sheets:", payload);
+  console.log("📤 กำลังส่งผลการแข่งขัน:", payload);
 
   fetch(GOOGLE_SHEETS_WEB_APP_URL, {
-    method: 'POST',
-    mode: 'no-cors',
+    method: "POST",
+    mode: "no-cors",
     headers: {
-      'Content-Type': 'text/plain;charset=utf-8'
+      "Content-Type": "text/plain;charset=utf-8"
     },
     body: JSON.stringify(payload)
   })
   .then(() => {
-    console.log("✅ ส่งข้อมูลไป Google Sheets แล้ว");
+    console.log("✅ ส่งผลการแข่งขันไป Google Sheets แล้ว");
   })
   .catch(error => {
-    console.error("❌ ส่งข้อมูลไม่สำเร็จ:", error);
+    console.error("❌ ไม่สามารถส่งข้อมูลไป Google Sheets:", error);
   });
 }
 
