@@ -1795,10 +1795,10 @@ function updateTimerUI(baseTime = QUESTION_TIME_LIMIT) {
 
       document.getElementById('victory-modal').classList.remove('hidden');
 
-      if (!hasLoggedThisGame && myRole === 0) {
-        hasLoggedThisGame = true;
-        saveToGoogleSheets(winner.name, winner.robotName, winner.crystals);
-      }
+     if (!hasLoggedThisGame && myRole === 0) {
+  hasLoggedThisGame = true;
+  saveToGoogleSheets();
+}
     }
 
     function closeVictoryAndShowHOF() {
