@@ -1807,16 +1807,35 @@ function updateTimerUI(baseTime = QUESTION_TIME_LIMIT) {
     }
 
     function saveToGoogleSheets(name, robot, score) {
-      if (!GOOGLE_SHEETS_WEB_APP_URL) return;
 
-      const payload = { name, robot, score };
-      fetch(GOOGLE_SHEETS_WEB_APP_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).catch(err => console.error("Sheet error:", err));
-    }
+  if (!GOOGLE_SHEETS_WEB_APP_URL) {
+    console.error("❌ ไม่พบ GOOGLE_SHEETS_WEB_APP_URL");
+    return;
+  }
+
+  const payload = {
+    name: String(name || ''),
+    robot: String(robot || ''),
+    score: Number(score) || 0
+  };
+
+  console.log("📤 กำลังส่งข้อมูลไป Google Sheets:", payload);
+
+  fetch(GOOGLE_SHEETS_WEB_APP_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8'
+    },
+    body: JSON.stringify(payload)
+  })
+  .then(() => {
+    console.log("✅ ส่งข้อมูลไป Google Sheets แล้ว");
+  })
+  .catch(error => {
+    console.error("❌ ส่งข้อมูลไม่สำเร็จ:", error);
+  });
+}
 
     function loadHOFData() {
       if (!GOOGLE_SHEETS_WEB_APP_URL) return;
